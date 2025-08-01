@@ -1,36 +1,38 @@
-import { colors, type AllColors, type FillAllColors, type KeyColors } from "@/consts/cube";
+import { colors, type AllColors, type FillAllColors } from "@/consts/cube";
 import { getColor } from "@/lib/cube";
 import { cn } from "@/lib/utils";
 import { memo } from "react";
 import { CubeFaceSidePOVTop } from "./CubeFaceSidePOVTop";
 
 
-type BoolNum = 1 | 0;
-type SideFaceToggle = [BoolNum, BoolNum, BoolNum];
-type CubeFacePOVTopProps = {
+export type BoolNum = 1 | 0;
+export type SideFaceToggle = [BoolNum, BoolNum, BoolNum];
+export type TailToggle = [BoolNum, BoolNum, BoolNum, BoolNum, BoolNum, BoolNum, BoolNum, BoolNum, BoolNum];
+export type CubeFacePOVTopProps = {
   color: FillAllColors
   emptyColor?: AllColors
-  tails?: [BoolNum, BoolNum, BoolNum, BoolNum, BoolNum, BoolNum, BoolNum, BoolNum, BoolNum]
+  tails?: TailToggle
   sides?: {
     top?: SideFaceToggle
     bottom?: SideFaceToggle
     left?: SideFaceToggle
     right?: SideFaceToggle
   }
+  className?: string
 }
 
 
 
-export const CubeFacePOVTop = memo(function ({ color, tails, sides, emptyColor = 'e' }: CubeFacePOVTopProps) {
-  console.log('Rendering CubeFacePOVTop');
+export const CubeFacePOVTop = memo(function ({ color, tails, sides, emptyColor = 'e', className }: CubeFacePOVTopProps) {
   emptyColor = getColor(emptyColor);
+  color = getColor(color) as FillAllColors;
 
   return (
-    <div className="rounded shadow-lg relative">
+    <div className={cn("rounded shadow-lg relative w-fit h-fit", className)}>
       <div className="grid grid-cols-3 gap-1">
         {[...Array(9)].map((_, index) => (
           <div key={index} className={cn(`size-10 rounded bg-face-${emptyColor}`, {
-            [`bg-face-${getColor(color)}`]: tails ? tails[index] === 1 : true,
+            [`bg-face-${color}`]: tails ? tails[index] === 1 : true,
           })}></div>
         ))}
       </div>
@@ -39,7 +41,7 @@ export const CubeFacePOVTop = memo(function ({ color, tails, sides, emptyColor =
           key={side} 
           side={side as 'top' | 'bottom' | 'left' | 'right'} 
           colors={toggle.map(
-            (active) => (active === 1 ? colors[color as KeyColors] : colors.e)
+            (active) => (active === 1 ? color : colors.e)
           ) as [AllColors | null, AllColors | null, AllColors | null]} 
         />
       ))}

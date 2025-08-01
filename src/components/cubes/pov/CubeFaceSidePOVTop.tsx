@@ -10,8 +10,6 @@ type CubeFaceSidePOVTopProps = {
 }
 
 export const CubeFaceSidePOVTop = memo(function ({ side, colors }: CubeFaceSidePOVTopProps) {
-  console.log(`Rendering side: ${side}`);
-
   if (colors === undefined) {
     return null;
   }
