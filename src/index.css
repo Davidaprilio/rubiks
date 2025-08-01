@@ -14,7 +14,7 @@
     --color-cube-base: var(--color-gray-800);
 }
 
-@source inline("bg-face-{red,orange,yellow,white,blue,green,empty}");
+@source inline("{before:,after:,}bg-face-{red,orange,yellow,white,blue,green,empty}");
 @source inline("bg-cube-base");
 
 @theme inline {
@@ -125,10 +125,11 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+    * {
+        @apply border-border outline-ring/50;
     }
-  body {
-    @apply bg-background text-foreground;
+
+    body {
+        @apply bg-background text-foreground;
     }
 }
