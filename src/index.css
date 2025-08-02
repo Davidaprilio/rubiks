@@ -10,7 +10,7 @@
     --color-face-white: var(--color-white);
     --color-face-blue: var(--color-blue-600);
     --color-face-green: var(--color-green-600);
-    --color-face-empty: var(--color-slate-800);
+    --color-face-empty: var(--color-gray-600);
     --color-cube-base: var(--color-gray-800);
 }
 

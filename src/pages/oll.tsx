@@ -1,10 +1,16 @@
 import PieceOll, { type PiecePllProps } from '@/components/cubes/PieceOll'
-import type { FillAllColors } from '@/consts/cube'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@/components/ui/select"
+import type { AllColors, FillAllColors } from '@/consts/cube'
 import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
+import { create } from 'zustand'
 
-const fillColor: FillAllColors = 'yellow'
-const emptyColor: FillAllColors = 'white'
 
 type FormulaPattern = {
     group: string
@@ -134,8 +140,30 @@ const formulasCols = (rowCount: number = 4) => {
     return result;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
+export const useSelectColors = create<{
+    fillColor: FillAllColors;
+    emptyColor: AllColors;
+    setFillColor: (color: FillAllColors) => void;
+    setEmptyColor: (color: AllColors) => void;
+}>((set) => {
+    return {
+        fillColor: localStorage.getItem('fillColor') as FillAllColors || 'yellow',
+        emptyColor: (localStorage.getItem('emptyColor') as AllColors) || 'empty',
+        setFillColor: (color: FillAllColors) => {
+            set({ fillColor: color });
+            localStorage.setItem('fillColor', color);
+        },
+        setEmptyColor: (color: AllColors) => {
+            set({ emptyColor: color });
+            localStorage.setItem('emptyColor', color);
+        },
+    }
+})
+
 export default function PageOLL() {
     const [col, setCol] = useState(0);
+    const { fillColor, setFillColor } = useSelectColors();
 
     // on window resize, rerender the page
     useEffect(() => {
@@ -167,11 +195,45 @@ export default function PageOLL() {
     }, [col]);
 
     return (
-        <div>
+        <div className="dark">
             <h1 className="text-white text-2xl text-center font-semibold">OLL (Orientation of the Last Layer)</h1>
             <p className="text-white text-center mt-4">This page will contain the OLL cube face with POV top view.</p>
+            <Select value={fillColor} onValueChange={(value) => setFillColor(value as FillAllColors)}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select Color" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="white">
+                        <SelectItemColor className="bg-face-white" text="White" />
+                    </SelectItem>
+                    <SelectItem value="yellow">
+                        <SelectItemColor className="bg-face-yellow" text="Yellow" />
+                    </SelectItem>
+                    <SelectItem value="red">
+                        <SelectItemColor className="bg-face-red" text="Red" />
+                    </SelectItem>
+                    <SelectItem value="orange">
+                        <SelectItemColor className="bg-face-orange" text="Orange" />
+                    </SelectItem>
+                    <SelectItem value="blue">
+                        <SelectItemColor className="bg-face-blue" text="Blue" />
+                    </SelectItem>
+                    <SelectItem value="green">
+                        <SelectItemColor className="bg-face-green" text="Green" />
+                    </SelectItem>
+                </SelectContent>
+            </Select>
 
             <GridFormulas col={col} />
+        </div>
+    )
+}
+
+function SelectItemColor({ className, text }: { className?: string, text: string }) {
+    return (
+        <div className="flex gap-x-2">
+            <div className={cn("size-4 rounded-full", className)}></div>
+            <span className="text-white">{text}</span>
         </div>
     )
 }
@@ -203,6 +265,7 @@ const GridFormulas = ({ col }: { col: number }) => {
 }
 
 function FormulaPattern({ pattern }: { pattern: FormulaPattern['patterns'][number] }) {
+    const { fillColor, emptyColor } = useSelectColors();
     let tails = pattern.tails as PiecePllProps['tails'];
     if (typeof pattern.tails === 'string') {
         tails = pattern.tails.split('').map(Number) as PiecePllProps['tails'];
@@ -217,7 +280,16 @@ function FormulaPattern({ pattern }: { pattern: FormulaPattern['patterns'][numbe
                 tails={tails}
             />
             <div>
-                <p className="text-white mt-2">{pattern.formulas.join(', ')}</p>
+                {pattern.formulas.map((formula, index) => (
+                    <p key={index} className="text-gray-300">
+                        {formula[0].split(' ').map((word, i) => (
+                            <span key={i}>
+                                {i > 0 && <span className="text-white/15 px-0.5">•</span>}
+                                {word}
+                            </span>
+                        ))}
+                    </p>
+                ))}
             </div>
         </div>
     )
