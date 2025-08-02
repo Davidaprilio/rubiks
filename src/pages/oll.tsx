@@ -233,7 +233,7 @@ function SelectItemColor({ className, text }: { className?: string, text: string
     return (
         <div className="flex gap-x-2">
             <div className={cn("size-4 rounded-full", className)}></div>
-            <span className="text-white">{text}</span>
+            <span className="dark:text-white">{text}</span>
         </div>
     )
 }
