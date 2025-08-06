@@ -1,6 +1,6 @@
-import { PIECES_COLOR_MAP, RUBIKS_THREE_COLORS } from '@/consts/cube';
+import { CubeFace, mapCubeFaceByIndex, mapCubeFaceByName, PIECES_COLOR_MAP, RUBIKS_THREE_COLORS, type Colors, type CubeFaceType, type KeyColors } from '@/consts/cube';
 import { OrbitControls } from '@react-three/drei';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { FontLoader } from 'three/examples/jsm/Addons.js';
@@ -31,18 +31,22 @@ const material = new THREE.MeshBasicMaterial({
 
 export class RubiksCube {
 
+    private readonly size = 3;
     private readonly totalPiece = 27;
+    private readonly pieces: THREE.Mesh[] = [];
     readonly groupPieces: THREE.Group = new THREE.Group();
     readonly groupRotate: THREE.Group = new THREE.Group();
     readonly cubeGeometries: THREE.BufferGeometry[] = [];
     private _piecePositions: [number, number, number][] = [];
+    private currRotate = 0;
+    private rotateThreshold = Math.PI / 2;
+    private cubeState: KeyColors[][] = [];
+
     constructor() {
     }
 
     async generateCube() {
         const sizePiece = 0.90;
-        const meshPieces: Record<number, THREE.Mesh> = {}
-
         // const font = await loader.loadAsync('fonts/helvetiker_regular.typeface.json')
 
         for (let piece = 0; piece < this.totalPiece; piece++) {
@@ -54,7 +58,7 @@ export class RubiksCube {
                 for (const faceIndex in pieceFaceColors) {
                     let color = pieceFaceColors[parseInt(faceIndex) as 0 | 1 | 2 | 3 | 4 | 5];
                     if (color === null || color === undefined) {
-                        color = RUBIKS_THREE_COLORS.base;
+                        color = RUBIKS_THREE_COLORS.empty;
                     }
 
                     colors.push(...this.makeVerticesColorFace(color));
@@ -62,30 +66,39 @@ export class RubiksCube {
             }
 
             boxPiece.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-            console.log({
-                piece,
-                boxPiece,
-                colors,
-            });
 
+            this.pieces[piece] = new THREE.Mesh(boxPiece, material);
+            this.groupPieces.add(this.pieces[piece]);
 
-            meshPieces[piece] = new THREE.Mesh(boxPiece, material);
-            this.groupPieces.add(meshPieces[piece]);
+            if (piece === 0) {
+                this.pieces[piece].userData = {
+                    name: 'center',
+                }
 
+                console.log('Center piece created:', this.pieces[piece]);
+                
+            }
         }
+        this.groupPieces.add(...this.pieces);
+        this.groupRotate.add(this.groupPieces);
 
-        this.groupPieces.add(this.groupRotate);
-
-        for (const pieceNum in meshPieces) {
+        for (const pieceNum in this.pieces) {
             const posOfPiece = this.piecePos(parseInt(pieceNum))
             if (!posOfPiece) {
                 throw new Error(`Position for piece ${pieceNum} not found.`);
             }
-            meshPieces[pieceNum].position.set(...posOfPiece);
+            this.pieces[pieceNum].position.set(...posOfPiece);
         }
 
-        this.groupPieces.position.x = 0.25;
-        this.groupPieces.position.y = 0.75;
+        // this.groupPieces.position.x = 0.25;
+        // this.groupPieces.position.y = 0.75;
+        // this.groupPieces.animations.
+
+        // const firstFace = this.pieces.slice(0, 9)
+        // console.log('firstFace', firstFace, this.pieces);
+        // this.groupRotate.add(
+        //     ...firstFace
+        // );
     }
 
     piecePos(index: number): [number, number, number] | undefined {
@@ -114,8 +127,85 @@ export class RubiksCube {
             }
         }
     }
+
+    private makeCubeState() {
+        this.cubeState = []
+        for (const key in CubeFace) {
+            const face = CubeFace[key as Colors];
+            if (face.faceIndex === null) continue; // Skip the base face
+            this.cubeState[face.faceIndex] = Array(9).fill(CubeFace[key as Colors].code)
+        }
+        return this.cubeState;
+    }
+
+    turnCubeState(faceIndex: number, clockwise: boolean = true) {
+        
+        const faceSide = this.cubeState[faceIndex];
+        let centerIndex = Math.ceil(faceSide.length / 2); 
+        
+
+    }
+
+    printState() {
+        if (this.cubeState.length === 0) {
+            this.makeCubeState();
+        }
+        console.log('Current Cube State:');
+        let faceStatePosition = '';
+        for (let i = 0; i < this.cubeState.length; i++) {
+            faceStatePosition += `${i} ${mapCubeFaceByIndex[i].name[0]}: ${this.cubeState[i].join(' ')}\n`;
+        }
+
+        console.log(faceStatePosition);
+
+        // maps 3d to 2d
+        //       | U(Y) |
+        // L(B) | F(R) | R(G) | B(O)
+        //     | D(W) |
+        const emptySpace = Array(this.size).fill(' ').join(' ');
+
+        const getStateByName = (name: CubeFaceType['name']) => this.cubeState[mapCubeFaceByName[name].faceIndex!];
+        const c2dArr = [
+            [null, getStateByName('Up'), null, null],
+            [getStateByName('Left'), getStateByName('Front'), getStateByName('Right'), getStateByName('Back')],
+            [null, getStateByName('Down'), null, null],
+        ];
+
+        let c2dStr = ``;
+        c2dStr += `================================\n`;
+        c2dStr += `     | Up    |\n`;
+        c2dStr += `Left | Front | Right | Back\n`;
+        c2dStr += `     | Down  |\n`;
+        c2dStr += `========= Visualize 2D =========\n\n`;
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < 3; j++) {
+                c2dArr[i].forEach((_, index) => {
+                    if (c2dArr[i][index] === null) c2dStr += emptySpace;
+                    else c2dStr += c2dArr[i][index]?.splice(0, this.size).join(' ');
+                    c2dStr += '  ';
+                })
+                c2dStr += '\n';
+            }
+            c2dStr += '\n';
+        }
+
+        console.log(c2dStr);
+    }
+
+    animate() {
+        if (this.currRotate >= this.rotateThreshold) {
+            return;
+        }
+
+        const seconds = 0.5;
+        const step = this.rotateThreshold / (seconds * 60); // Assuming 60 FPS
+        this.groupRotate.rotation.z += step;
+        this.currRotate += step;
+    }
 }
 
+export const rubiks = new RubiksCube();
+window.rubiks = rubiks; // Expose for debugging
 
 function CubeObj() {
     const { scene } = useThree();
@@ -124,8 +214,26 @@ function CubeObj() {
     const cube = useMemo(() => {
         const cube = new RubiksCube();
         cube.generateCube();
+        // cube.groupPieces.traverse(child => {
+        //     if ((child as THREE.Mesh).isMesh) {
+        //         const mesh = child as THREE.Mesh;
+        //         const wireframe = new THREE.LineSegments(
+        //             new THREE.WireframeGeometry(mesh.geometry),
+        //             new THREE.LineBasicMaterial({ color: 0x00ff00 })
+        //         );
+        //         wireframe.position.copy(mesh.position);
+        //         wireframe.rotation.copy(mesh.rotation);
+        //         wireframe.scale.copy(mesh.scale);
+        //         scene.add(wireframe);
+        //     }
+        // });
         return cube;
     }, []);
+    
+    useFrame(() => {        
+        cube.animate();
+
+    });
 
     useEffect(() => {
         scene.add(cube.groupPieces);

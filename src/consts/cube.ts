@@ -1,43 +1,57 @@
 import * as THREE from 'three';
 
 export const colors = {
-  'w': 'white',
-  'r': 'red',
-  'b': 'blue',
-  'g': 'green',
-  'y': 'yellow',
-  'o': 'orange',
-  'e': 'empty',
+  'W': 'WHITE',
+  'R': 'RED',
+  'B': 'BLUE',
+  'G': 'GREEN',
+  'Y': 'YELLOW',
+  'O': 'ORANGE',
+  'E': 'EMPTY',
 } as const;
 
 
 export const CubeFace = {
   RED: {
     code: "R",
+    name: 'Front',
+    faceIndex: 0,
     color: "#B90000",
   },
   ORANGE: {
     code: "O",
+    name: 'Back',
+    faceIndex: 3,
     color: "#FF5900",
   },
   YELLOW: {
     code: "Y",
+    name: 'Up',
+    faceIndex: 2,
     color: "#FFD500",
   },
   WHITE: {
     code: "W",
+    name: 'Down',
+    faceIndex: 5,
     color: "#FFFFFF",
   },
   GREEN: {
     code: "G",
+    name: 'Right',
+    faceIndex: 1,
     color: "#009B48",
   },
   BLUE: {
     code: "B",
+    name: 'Left',
+    faceIndex: 4,
     color: "#0045AD",
   },
-  BASE: {
-    code: "X",
+  EMPTY: {
+    code: "E",
+    name: 'Empty',
+    faceIndex: null,
     color: "#000000", // gray
   },
 } as const;
@@ -54,9 +68,24 @@ export const RUBIKS_THREE_COLORS = {
   white: new THREE.Color(CubeFace.WHITE.color),
   green: new THREE.Color(CubeFace.GREEN.color),
   blue: new THREE.Color(CubeFace.BLUE.color),
-  base: new THREE.Color(CubeFace.BASE.color),
+  empty: new THREE.Color(CubeFace.EMPTY.color),
 }
 
+export type KeyCubeFace = keyof typeof CubeFace;
+export type CubeFaceType = typeof CubeFace[KeyCubeFace];
+export const mapCubeFaceByIndex = Object.entries(CubeFace).reduce((acc, [, value]) => {
+  if (value.faceIndex !== null) {
+    acc[value.faceIndex] = value;
+  }
+  return acc;
+}, {} as Record<number, typeof CubeFace[keyof typeof CubeFace]>);
+
+export const mapCubeFaceByName = Object.entries(CubeFace).reduce((acc, [, value]) => {
+  if (value.faceIndex !== null) {
+    acc[value.name] = value;
+  }
+  return acc;
+}, {} as Record<CubeFaceType['name'], CubeFaceType>);
 
 export const PIECES_COLOR_MAP: Record<number, {
   [faceIndex in 0 | 1 | 2 | 3 | 4 | 5]: THREE.Color | null;
