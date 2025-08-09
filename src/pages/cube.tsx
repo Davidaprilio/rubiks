@@ -164,7 +164,7 @@ export class RubiksCube {
         //     | D(W) |
         const emptySpace = Array(this.size).fill(' ').join(' ');
 
-        const getStateByName = (name: CubeFaceType['name']) => this.cubeState[mapCubeFaceByName[name].faceIndex!];
+        const getStateByName = (name: CubeFaceType['name']) => [...this.cubeState[mapCubeFaceByName[name].faceIndex!]];
         const c2dArr = [
             [null, getStateByName('Up'), null, null],
             [getStateByName('Left'), getStateByName('Front'), getStateByName('Right'), getStateByName('Back')],
