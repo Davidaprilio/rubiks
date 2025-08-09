@@ -1,4 +1,5 @@
 import { CubeFace, mapCubeFaceByIndex, mapCubeFaceByName, PIECES_COLOR_MAP, RUBIKS_THREE_COLORS, type Colors, type CubeFaceType, type KeyColors } from '@/consts/cube';
+import { getArrMatrixIndex, rotateMatrix } from '@/lib/utils';
 import { OrbitControls } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
@@ -138,12 +139,47 @@ export class RubiksCube {
         return this.cubeState;
     }
 
-    turnCubeState(faceIndex: number, clockwise: boolean = true) {
-        
-        const faceSide = this.cubeState[faceIndex];
-        let centerIndex = Math.ceil(faceSide.length / 2); 
-        
+    rotateFace(faceIndex: number, clockwise: boolean = true) {
+        this.cubeState[faceIndex] = rotateMatrix(this.cubeState[faceIndex], this.size, clockwise);
+    
+        this.pivotFace(faceIndex, clockwise);
+    }
 
+    pivotFace(faceIndex: number, clockwise: boolean = true) {
+        // side faces rotation
+        if (mapCubeFaceByIndex[faceIndex].adjacent) {
+            let tmpPieces: [number, KeyColors][] = [];
+            const adjacent = [...mapCubeFaceByIndex[faceIndex].adjacent]
+            if (!clockwise) {
+                adjacent.reverse();
+                adjacent.unshift(adjacent.pop()!); // Move last to first
+            }
+            adjacent.forEach((adjacentFaceName, index, arrAdjacent) => {
+                if (index === 0) {
+                    // get left face pieces
+                    const lastFaceIndex = CubeFace[arrAdjacent[3]].faceIndex
+                    console.log({
+                        cubeState: this.cubeState[lastFaceIndex],
+                        adjacentFaceName,
+                        arrAdjacent,
+                        lastFaceIndex,
+                        state: this.cubeState,
+                    });
+
+                    tmpPieces = getArrMatrixIndex(this.cubeState[lastFaceIndex], clockwise ? 'row' : 'col', this.size, 0);
+                }
+                const sideFaceIndex = CubeFace[adjacentFaceName].faceIndex
+                let direction: 'row' | 'col' = index > 1 ? 'row' : 'col'
+                if (!clockwise) {
+                    direction = [1,2].includes(index) ? 'row' : 'col';
+                }
+                const safePieces = getArrMatrixIndex(this.cubeState[sideFaceIndex], direction, this.size, 0);
+                tmpPieces.forEach(([, color], i) => {
+                    this.cubeState[sideFaceIndex][safePieces[i][0]] = color;
+                });
+                tmpPieces = safePieces;
+            });
+        }
     }
 
     printState() {
@@ -205,6 +241,7 @@ export class RubiksCube {
 }
 
 export const rubiks = new RubiksCube();
+rubiks.makeCubeState();
 window.rubiks = rubiks; // Expose for debugging
 
 function CubeObj() {

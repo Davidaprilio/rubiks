@@ -11,47 +11,57 @@ export const colors = {
 } as const;
 
 
+/**
+ * @property {string[]} adjacent - List of adjacent faces key, in clockwise order. 0- Up, 1- Right, 2- Down, 3- Left
+ */
 export const CubeFace = {
   RED: {
     code: "R",
     name: 'Front',
     faceIndex: 0,
     color: "#B90000",
+    adjacent: ['YELLOW', 'GREEN', 'WHITE', 'BLUE'],
   },
   ORANGE: {
     code: "O",
     name: 'Back',
     faceIndex: 3,
     color: "#FF5900",
+    adjacent: ['YELLOW', 'BLUE', 'WHITE', 'GREEN'],
   },
   YELLOW: {
     code: "Y",
     name: 'Up',
     faceIndex: 2,
     color: "#FFD500",
+    adjacent: ['RED', 'BLUE', 'ORANGE', 'GREEN'],
   },
   WHITE: {
     code: "W",
     name: 'Down',
     faceIndex: 5,
     color: "#FFFFFF",
+    adjacent: ['RED', 'GREEN', 'ORANGE', 'BLUE'],
   },
   GREEN: {
     code: "G",
     name: 'Right',
     faceIndex: 1,
     color: "#009B48",
+    adjacent: ['YELLOW', 'ORANGE', 'WHITE', 'RED'],
   },
   BLUE: {
     code: "B",
     name: 'Left',
     faceIndex: 4,
     color: "#0045AD",
+    adjacent: ['YELLOW', 'RED', 'WHITE', 'ORANGE'],
   },
   EMPTY: {
     code: "E",
     name: 'Empty',
     faceIndex: null,
+    adjacent: null,
     color: "#000000", // gray
   },
 } as const;
