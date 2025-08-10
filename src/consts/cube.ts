@@ -10,6 +10,15 @@ export const colors = {
   'E': 'EMPTY',
 } as const;
 
+export type RubiksNotation = 'x' | 'y' | 'z' | 'U' | 'D' | 'L' | 'R' | 'F' | 'B';
+
+export type FullRubiksNotation = 'x' | 'y' | 'z' | 'x2' | 'y2' | 'z2' |
+  'u' | 'd' | 'l' | 'r' | 'f' | 'b' |
+  'U' | 'D' | 'L' | 'R' | 'F' | 'B' |
+  'ui' | 'di' | 'li' | 'ri' | 'fi' | 'bi' |
+  'u2' | 'd2' | 'l2' | 'r2' | 'f2' | 'b2' |
+  'Ui' | 'Di' | 'Li' | 'Ri' | 'Fi' | 'Bi' |
+  'U2' | 'D2' | 'L2' | 'R2' | 'F2' | 'B2';
 
 /**
  * @property {string[]} adjacent - List of adjacent faces key, in clockwise order. 0- Up, 1- Right, 2- Down, 3- Left
@@ -27,14 +36,14 @@ export const CubeFace = {
     name: 'Back',
     faceIndex: 3,
     color: "#FF5900",
-    adjacent: ['YELLOW', 'BLUE', 'WHITE', 'GREEN'],
+    adjacent: ['BLUE', 'WHITE', 'GREEN', 'YELLOW'],
   },
   YELLOW: {
     code: "Y",
     name: 'Up',
     faceIndex: 2,
     color: "#FFD500",
-    adjacent: ['RED', 'BLUE', 'ORANGE', 'GREEN'],
+    adjacent: ['BLUE', 'ORANGE', 'GREEN', 'RED'],
   },
   WHITE: {
     code: "W",
@@ -55,7 +64,7 @@ export const CubeFace = {
     name: 'Left',
     faceIndex: 4,
     color: "#0045AD",
-    adjacent: ['YELLOW', 'RED', 'WHITE', 'ORANGE'],
+    adjacent: ['RED', 'WHITE', 'ORANGE', 'YELLOW'],
   },
   EMPTY: {
     code: "E",
