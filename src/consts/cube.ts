@@ -10,15 +10,20 @@ export const colors = {
   'E': 'EMPTY',
 } as const;
 
-export type RubiksNotation = 'x' | 'y' | 'z' | 'U' | 'D' | 'L' | 'R' | 'F' | 'B';
-
-export type FullRubiksNotation = 'x' | 'y' | 'z' | 'x2' | 'y2' | 'z2' |
-  'u' | 'd' | 'l' | 'r' | 'f' | 'b' |
-  'U' | 'D' | 'L' | 'R' | 'F' | 'B' |
-  'ui' | 'di' | 'li' | 'ri' | 'fi' | 'bi' |
-  'u2' | 'd2' | 'l2' | 'r2' | 'f2' | 'b2' |
-  'Ui' | 'Di' | 'Li' | 'Ri' | 'Fi' | 'Bi' |
-  'U2' | 'D2' | 'L2' | 'R2' | 'F2' | 'B2';
+export type Notation3D = 'x' | 'y' | 'z' ;
+export type Notation = 'U' | 'D' | 'L' | 'R' | 'F' | 'B';
+export type NotationLower = 'u' | 'd' | 'l' | 'r' | 'f' | 'b';
+export type NotationInverse = 'Ui' | 'Di' | 'Li' | 'Ri' | 'Fi' | 'Bi';
+export type NotationLowerInverse = 'ui' | 'di' | 'li' | 'ri' | 'fi' | 'bi';
+export type NotationDouble = 'U2' | 'D2' | 'L2' | 'R2' | 'F2' | 'B2';
+export type NotationLowerDouble = 'u2' | 'd2' | 'l2' | 'r2' | 'f2' | 'b2';
+export type FullRubiksNotation = Notation3D 
+  | Notation 
+  | NotationInverse 
+  | NotationLower 
+  | NotationLowerInverse 
+  | NotationDouble 
+  | NotationLowerDouble;
 
 /**
  * @property {string[]} adjacent - List of adjacent faces key, in clockwise order. 0- Up, 1- Right, 2- Down, 3- Left

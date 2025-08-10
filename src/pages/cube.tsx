@@ -41,7 +41,7 @@ const AXIS_COLORS = {
     // rubiks.turns("F2");
     rubiks.turns("R U R' U R U2 R'");
     rubiks.printState();
-    rubiks.turns("R U2 R' U' R U' R");
+    rubiks.turns("R U2 R' U' R U' R'");
     rubiks.printState();
 })()
 

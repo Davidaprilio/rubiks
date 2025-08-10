@@ -1,5 +1,5 @@
 import { CubeFace, mapCubeFaceByIndex, mapCubeFaceByName } from "@/consts/cube";
-import type { Colors, CubeFaceType, FullRubiksNotation, KeyColors, RubiksNotation } from "@/consts/cube";
+import type { Colors, CubeFaceType, FullRubiksNotation, KeyColors, Notation, NotationLower } from "@/consts/cube";
 import { getArrMatrixIndex, rotateMatrix } from "@/lib/utils";
 
 export class Rubiks {
@@ -32,70 +32,87 @@ export class Rubiks {
      */
     turns(notation: string) {
         const moves = notation.split(' ') as FullRubiksNotation[];
-        moves.forEach(move => {
-            // const clockwise = !move.endsWith("i");
-            let step = 1
-            if (move.endsWith("2")) {
-                step = 2;
-            } else if (move.endsWith("i") || move.endsWith("'")) {
-                step = 3; // counter-clockwise
-            }
-            const basicNotation = move[0]
-            if (['x', 'y', 'z'].includes(basicNotation)) {
-                this.logger.warn(`Skipping 3D rotation ${basicNotation} for Rubik's cube`);
-                return;
-            }
-
-            for (let i = 0; i < step; i++) {
-                this.turn(basicNotation.toUpperCase() as RubiksNotation, true);
-            }
-        });
+        moves.forEach(move => this.turn(move));
         this.logger.log(`Applied moves: ${notation}`);
+    }
+
+    turn(notation: FullRubiksNotation) {
+        let loop = 1;
+        if (notation.endsWith("2")) {
+            loop = 2;
+        } else if (notation.endsWith("i") || notation.endsWith("'")) {
+            loop = 3; // counter-clockwise
+        }
+        const moveNotation = notation[0] as Notation | NotationLower;
+        if (['x', 'y', 'z'].includes(moveNotation)) {
+            this.logger.warn(`Skipping 3D rotation ${moveNotation} for Rubik's cube`);
+            return;
+        }
+        for (let i = 0; i < loop; i++) {
+            this.turnNotation(moveNotation, true);
+        }
     }
 
     /**
      * Turns the Rubik's cube face based on the notation.
      */
-    turn(notation: RubiksNotation, clockwise: boolean = true) {
+    turnNotation(notation: Notation | NotationLower, clockwise: boolean = true) {
         if (this.cubeState.length === 0) this.makeCubeState();
 
         switch (notation) {
             case 'U':
-                this.rotateFace(CubeFace.YELLOW.faceIndex, clockwise);
+            case 'u':
+                this.rotateFace(CubeFace.YELLOW.faceIndex, clockwise, (notation === 'u'));
                 break;
             case 'D':
-                this.rotateFace(CubeFace.WHITE.faceIndex, clockwise);
+            case 'd':
+                this.rotateFace(CubeFace.WHITE.faceIndex, clockwise, (notation === 'd'));
                 break;
             case 'L':
-                this.rotateFace(CubeFace.BLUE.faceIndex, clockwise);
+            case 'l':
+                this.rotateFace(CubeFace.BLUE.faceIndex, clockwise, (notation === 'l'));
                 break;
             case 'R':
-                this.rotateFace(CubeFace.GREEN.faceIndex, clockwise);
+            case 'r':
+                this.rotateFace(CubeFace.GREEN.faceIndex, clockwise, (notation === 'r'));
                 break;
             case 'F':
-                this.rotateFace(CubeFace.RED.faceIndex, clockwise);
+            case 'f':
+                this.rotateFace(CubeFace.RED.faceIndex, clockwise, (notation === 'f'));
                 break;
             case 'B':
-                this.rotateFace(CubeFace.ORANGE.faceIndex, clockwise);
-                break;
+            case 'b':
+                this.rotateFace(CubeFace.ORANGE.faceIndex, clockwise, (notation === 'b'));
+                break
             default:
                 throw new Error(`Unknown notation: ${notation}`);
         }
     }
 
-    rotateFace(faceIndex: number, clockwise: boolean = true) {
+    rotateFace(faceIndex: number, clockwise: boolean = true, withMiddle: boolean = true) {
         this.cubeState[faceIndex] = rotateMatrix(this.cubeState[faceIndex], this.size, clockwise);
-    
         this.pivotFace(faceIndex, clockwise);
+        if (withMiddle) {
+            this.pivotFace(faceIndex, clockwise, 1);
+        }
     }
 
-    pivotFace(faceIndex: number, clockwise: boolean = true) {
+    /**
+     * Rotates the adjacent faces of the given face index.
+     * @param faceIndex - The index of the face to center.
+     * @param clockwise - Whether to rotate clockwise or counter-clockwise.
+     * @param range - 0 marks the starting position on the face side, and the sequence of pieces rotates from that starting point, max 1.
+     */
+    pivotFace(faceIndex: number, clockwise: boolean = true, range: number = 0) {
         // ganjil 
         // top, right = row 2
         // bottom, left = col 2
         // genap
         // top, left = col 0
         // bottom, right = row 0
+        if (range < 0 || range > 1) {
+            throw new Error(`Range must be between 0 and 1, got ${range}`);
+        }
 
         this.logger.group(`pivotFace ${faceIndex} ${clockwise ? 'clockwise' : 'counter-clockwise'}`);        
         // side faces rotation
@@ -107,7 +124,7 @@ export class Rubiks {
                 adjacent.unshift(adjacent.pop()!); // Move last to first
             }
             const isOddFace = faceIndex % 2 === 0; // 0, 2, 4 are odd faces
-            const matrixIndex = isOddFace ? 0 : 2;
+            const matrixIndex = range ? range : isOddFace ? 0 : 2;
            
             const indMove = (index: number) => {
                 if (isOddFace) {
