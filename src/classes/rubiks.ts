@@ -3,10 +3,14 @@ import type { Colors, CubeFaceType, FullRubiksNotation, KeyColors, Notation, Not
 import { getArrMatrixIndex, rotateMatrix } from "@/lib/utils";
 
 export class Rubiks {
-    readonly debug = true;
+    readonly debug;
     private readonly size = 3;
     private cubeState: KeyColors[][] = [];
 
+    constructor(options?: { debug?: boolean }) {
+        this.cubeState = Array.from({ length: 6 }, () => Array(this.size * this.size).fill(''));
+        this.debug = options?.debug ?? false;
+    }
 
     makeCubeState() {
         this.cubeState = []
@@ -136,17 +140,17 @@ export class Rubiks {
             }
             const dirMove = (index: number) => {
                 const a = indMove(index);
-                console.log(`Direction for index ${index}: ${a}, matrix ${matrixIndex} isOddFace=${isOddFace}, clockwise=${clockwise} color=${adjacent[index]}`);
+                this.logger.log(`Direction for index ${index}: ${a}, matrix ${matrixIndex} isOddFace=${isOddFace}, clockwise=${clockwise} color=${adjacent[index]}`);
                 return a;
             }
 
-            console.log('adjacent faces:', adjacent);
+            this.logger.log('adjacent faces:', adjacent);
             adjacent.forEach((adjacentFaceName, index, arrAdjacent) => {
                 if (index === 0) {
                     const lastAdjacent = 3
                     const lastFaceIndex = CubeFace[arrAdjacent[3]].faceIndex
                     tmpPieces = getArrMatrixIndex(this.cubeState[lastFaceIndex], dirMove(lastAdjacent), this.size, matrixIndex);
-                    console.log('initial tmpPieces:', tmpPieces, {
+                    this.logger.log('initial tmpPieces:', tmpPieces, {
                         lastAdjacent,
                         color: arrAdjacent[lastAdjacent],
                         lastFaceIndex
@@ -154,11 +158,11 @@ export class Rubiks {
                 }
                 const sideFaceIndex = CubeFace[adjacentFaceName].faceIndex
                 const safePieces = getArrMatrixIndex(this.cubeState[sideFaceIndex], dirMove(index), this.size, matrixIndex);
-                console.log('safePieces:', safePieces);
+                this.logger.log('safePieces:', safePieces);
                 if (clockwise && (index === 0 || index === 2)) {
                     tmpPieces.reverse();
                 } else if (!clockwise && (index === 1 || index === 3)) {
-                    console.log('Reversing tmpPieces for counter-clockwise:', tmpPieces);
+                    this.logger.log('Reversing tmpPieces for counter-clockwise:', tmpPieces);
                     
                     tmpPieces.reverse();
                 }
