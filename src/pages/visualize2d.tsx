@@ -32,7 +32,6 @@ export default function Visualize2D() {
         const rubiks = new Rubiks();
         rubiksRef.current = rubiks;
         rubiks.makeCubeState(); // initialize cube state
-        // kalau masih perlu debug global:
         console.log('rubiks', rubiks.getState());
         setCubeState(rubiks.getState()); // snapshot awal
 
@@ -50,7 +49,7 @@ export default function Visualize2D() {
     }
 
     return (
-        <div className='w-screen min-h-screen'>
+        <div className='w-screen min-h-screen select-none'>
             <h1 className='text-2xl text-center mt-4'>Visualize 2D Rubik's</h1>
 
             <div className="mt-15">
@@ -69,7 +68,7 @@ export default function Visualize2D() {
                     </div>
                     <div className="grid grid-cols-4 w-fit">
                         <div></div>
-                        <Face pieces={cubeState[5]} className="text-black" />
+                        <Face pieces={cubeState[5]} />
                         <div></div>
                         <div></div>
                     </div>
@@ -103,9 +102,9 @@ function Face(props: { pieces: string[], className?: string }) {
                     'bg-red-500': color.startsWith('R'),
                     'bg-blue-500': color.startsWith('B'),
                     'bg-green-500': color.startsWith('G'),
-                    'bg-yellow-500': color.startsWith('Y'),
+                    'bg-yellow-400 text-yellow-950': color.startsWith('Y'),
                     'bg-orange-500': color.startsWith('O'),
-                    'bg-white': color.startsWith('W'),
+                    'bg-white text-slate-700': color.startsWith('W'),
                 })} value={color} />
             ))}
         </div>
