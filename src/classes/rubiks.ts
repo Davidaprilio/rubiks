@@ -1,5 +1,5 @@
 import { CubeFace, mapCubeFaceByIndex, mapCubeFaceByName } from "@/consts/cube";
-import type { Colors, CubeFaceType, FullRubiksNotation, KeyColors, Notation, NotationLower } from "@/consts/cube";
+import type { Colors, CubeFaceType, FullRubiksNotation, KeyColors, KeyCubeFace, Notation, NotationLower } from "@/consts/cube";
 import { getArrMatrixIndex, rotateMatrix } from "@/lib/utils";
 
 export class Rubiks {
@@ -28,6 +28,63 @@ export class Rubiks {
             this.makeCubeState();
         }
         return JSON.parse(JSON.stringify(this.cubeState)) as KeyColors[][];
+    }
+
+    getAdjacentFaces(faceIndex: number): [KeyCubeFace, KeyCubeFace, KeyCubeFace, KeyCubeFace] | null {
+        const s = mapCubeFaceByIndex[faceIndex];
+        if (s === null || s.adjacent === null) return null;
+        return [...s.adjacent];
+    }
+
+    /**
+     * Get the piece of an adjacent face based on the center face index, side, and piece index.
+     * this will automate fix direction of adjacent pieces index
+     * Example: 
+     * - getPieceOfAdjacentFace(0, 'F', [0,1,2]) => [2, 5, 8]
+     * - getPieceOfAdjacentFace(0, 'L', [0,1,2]) => [0, 3, 6]
+     * - getPieceOfAdjacentFace(0, 'R', [3,4,5]) => [1, 4, 7]
+     * @param centerFaceIndex The index of the center face.
+     * @param side The side of the adjacent face.
+     * @param pickPieceIndex The index of the piece to pick.
+     * @returns The color of the piece or null if not found.
+     * 
+     */
+    getPieceOfAdjacentFace(centerFaceIndex: number, side: Exclude<Notation, 'B' | 'F'>, pickPieceIndex: number[]) {
+        const adjacentFaces = this.getAdjacentFaces(centerFaceIndex);
+        if (!adjacentFaces) return null;
+
+        const sideToIndexMap = {
+            U: 0,
+            R: 1,
+            D: 2,
+            L: 3,
+        }
+        const selectedColor = adjacentFaces[sideToIndexMap[side]]
+        const selectedFace = CubeFace[selectedColor]
+        const facePieces = this.cubeState[selectedFace.faceIndex!];
+        let indexReflect = Array.from({ length: facePieces.length }, (_, i) => i);
+
+        // centerFaceIndex genap U & R = clockwise | L & D = double-clockwise
+        // centerFaceIndex ganjil U & R = nothing | D & L = counter-clockwise
+        let rotate = 0; // -1: counter-clockwise, 0: nothing, 1: clockwise, 2: double-clockwise
+        if (centerFaceIndex % 2 === 0) {
+            rotate = (side === 'U' || side === 'R') ? 1 : 2;
+        } else {
+            rotate = (side === 'U' || side === 'R') ? 0 : -1;
+        }
+
+        while (rotate !== 0) {
+            indexReflect = rotateMatrix(indexReflect, this.size, rotate > 0);
+            rotate += (rotate > 0) ? -1 : 1;
+        }
+
+        const indexReflectMap = indexReflect.reduce((acc, pickIndex, reflectIndex) => {
+            acc[pickIndex] = reflectIndex;
+            return acc;
+        }, {} as Record<number, number>);
+
+        const mappedPickPieceIndex = pickPieceIndex.map(index => indexReflectMap[index]);
+        return mappedPickPieceIndex;
     }
 
     /**
@@ -120,9 +177,9 @@ export class Rubiks {
 
         this.logger.group(`pivotFace ${faceIndex} ${clockwise ? 'clockwise' : 'counter-clockwise'}`);        
         // side faces rotation
-        if (mapCubeFaceByIndex[faceIndex].adjacent) {
+        const adjacent = this.getAdjacentFaces(faceIndex);
+        if (adjacent) {
             let tmpPieces: [number, KeyColors][] = [];
-            const adjacent = [...mapCubeFaceByIndex[faceIndex].adjacent]
             if (!clockwise) {
                 adjacent.reverse();
                 adjacent.unshift(adjacent.pop()!); // Move last to first
@@ -148,7 +205,7 @@ export class Rubiks {
             adjacent.forEach((adjacentFaceName, index, arrAdjacent) => {
                 if (index === 0) {
                     const lastAdjacent = 3
-                    const lastFaceIndex = CubeFace[arrAdjacent[3]].faceIndex
+                    const lastFaceIndex = CubeFace[arrAdjacent[3]].faceIndex!
                     tmpPieces = getArrMatrixIndex(this.cubeState[lastFaceIndex], dirMove(lastAdjacent), this.size, matrixIndex);
                     this.logger.log('initial tmpPieces:', tmpPieces, {
                         lastAdjacent,
@@ -156,7 +213,7 @@ export class Rubiks {
                         lastFaceIndex
                     });
                 }
-                const sideFaceIndex = CubeFace[adjacentFaceName].faceIndex
+                const sideFaceIndex = CubeFace[adjacentFaceName].faceIndex!
                 const safePieces = getArrMatrixIndex(this.cubeState[sideFaceIndex], dirMove(index), this.size, matrixIndex);
                 this.logger.log('safePieces:', safePieces);
                 if (clockwise && (index === 0 || index === 2)) {
