@@ -1,7 +1,14 @@
 import { Rubiks } from "@/classes/rubiks";
+import { Rubiks3x3Solver } from "@/classes/solvers/Rubiks3x3.solver";
 import type { KeyColors, Notation, NotationDouble, NotationInverse } from "@/consts/cube";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
+
+declare global {
+    interface Window {
+        solver: Rubiks3x3Solver;
+    }
+}
 
 const notations: Record<Notation|NotationInverse|NotationDouble, string> = {
     'F': 'Front',
@@ -26,6 +33,7 @@ const notations: Record<Notation|NotationInverse|NotationDouble, string> = {
 
 export default function Visualize2D() {
     const rubiksRef = useRef<Rubiks>(null!);
+    const solverRef = useRef<Rubiks3x3Solver>(null!);
     const [cubeState, setCubeState] = useState<KeyColors[][]>([[], [], [], [], [], []]);
 
     useEffect(() => {
@@ -35,7 +43,9 @@ export default function Visualize2D() {
         console.log('rubiks', rubiks.getState());
         setCubeState(rubiks.getState()); // snapshot awal
 
-        
+        const solver = new Rubiks3x3Solver(rubiks);
+        solverRef.current = solver;
+        window.solver = solver;
     }, []);
 
     // panggil ini setiap selesai melakukan move pada rubiksRef.current
