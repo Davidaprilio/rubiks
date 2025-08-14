@@ -95,6 +95,7 @@ export const RUBIKS_THREE_COLORS = {
   empty: new THREE.Color(CubeFace.EMPTY.color),
 }
 
+export type FaceIndex = 0 | 1 | 2 | 3 | 4 | 5;
 export type KeyCubeFace = keyof typeof CubeFace;
 export type CubeFaceType = typeof CubeFace[KeyCubeFace];
 export const mapCubeFaceByIndex = Object.entries(CubeFace).reduce((acc, [c, value]) => {
@@ -115,7 +116,7 @@ export const mapCubeFaceByName = Object.entries(CubeFace).reduce((acc, [, value]
 }, {} as Record<CubeFaceType['name'], CubeFaceType>);
 
 export const PIECES_COLOR_MAP: Record<number, {
-  [faceIndex in 0 | 1 | 2 | 3 | 4 | 5]: THREE.Color | null;
+  [faceIndex in FaceIndex]: THREE.Color | null;
 }> = {
   0: {
     0: RUBIKS_THREE_COLORS.red,

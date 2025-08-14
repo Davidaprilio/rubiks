@@ -1,5 +1,5 @@
 import { CubeFace, mapCubeFaceByIndex, mapCubeFaceByName } from "@/consts/cube";
-import type { Colors, CubeFaceType, FullRubiksNotation, KeyColors, KeyCubeFace, Notation, NotationLower } from "@/consts/cube";
+import type { Colors, CubeFaceType, FaceIndex, FullRubiksNotation, KeyColors, KeyCubeFace, Notation, NotationLower } from "@/consts/cube";
 import { getArrMatrixIndex, rotateMatrix } from "@/lib/utils";
 
 export class Rubiks {
@@ -34,6 +34,10 @@ export class Rubiks {
         const s = mapCubeFaceByIndex[faceIndex];
         if (s === null || s.adjacent === null) return null;
         return [...s.adjacent];
+    }
+
+    getBackFaceIndex(frontFaceIndex: number): FaceIndex {
+        return (frontFaceIndex + 3) % 6 as FaceIndex;
     }
 
     /**

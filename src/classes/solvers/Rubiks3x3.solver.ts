@@ -93,6 +93,20 @@ export class Rubiks3x3Solver {
         return faceF2L;
     }
 
+    isOLL(faceDownIndex: number): boolean {
+        const topFaceIndex = this.rubik.getBackFaceIndex(faceDownIndex);
+        const isDoneColor = this.faceIsSameColor(this.rubik.getState()[topFaceIndex]);
+        if (!isDoneColor) return false;
+
+        const f2l = this.getFaceF2L(faceDownIndex);
+        return f2l.isF2L;
+    }
+
+    isSolved(): boolean {
+        const state = this.rubik.getState();
+        return state.every(face => this.faceIsSameColor(face));
+    }
+
     faceIsSameColor(pieces: KeyColors[]): boolean {
         const centerColor = pieces[4];
         return pieces.every(piece => piece.startsWith(centerColor[0]));
