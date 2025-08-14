@@ -97,12 +97,15 @@ export const RUBIKS_THREE_COLORS = {
 
 export type KeyCubeFace = keyof typeof CubeFace;
 export type CubeFaceType = typeof CubeFace[KeyCubeFace];
-export const mapCubeFaceByIndex = Object.entries(CubeFace).reduce((acc, [, value]) => {
+export const mapCubeFaceByIndex = Object.entries(CubeFace).reduce((acc, [c, value]) => {
   if (value.faceIndex !== null) {
-    acc[value.faceIndex] = value;
+    acc[value.faceIndex] = {
+      ...value,
+      colorName: c as KeyCubeFace
+    };
   }
   return acc;
-}, {} as Record<number, typeof CubeFace[keyof typeof CubeFace]>);
+}, {} as Record<number, (typeof CubeFace[keyof typeof CubeFace]) & { colorName: KeyCubeFace }>);
 
 export const mapCubeFaceByName = Object.entries(CubeFace).reduce((acc, [, value]) => {
   if (value.faceIndex !== null) {
