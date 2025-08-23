@@ -31,6 +31,7 @@ export class Face {
             corner.addFacelet(this.facelets[indexCorners[fI]]);
             corner.addFacelet(getFacelet(shiftI, adjacents[shiftI]!.shift()!));
             corner.addFacelet(getFacelet(popI, adjacents[popI]!.pop()!));   
+            corner.setType()
             this.rubiks.addPieces(corner);
         }
         createCornerPiece(0, 0, 3) // TL
@@ -47,6 +48,7 @@ export class Face {
                 const edge = new Piece();
                 edge.addFacelet(this.facelets[i]);
                 edge.addFacelet(getFacelet(index, adjacents[index]!.shift()!));
+                edge.setType()
                 this.rubiks.addPieces(edge);
             });
         }

@@ -2,9 +2,9 @@ import type { Facelet } from "./facelet";
 
 export type PieceType = "corner" | "edge" | "center";
 const pieceLengthTypeMap: { [key: number]: PieceType } = {
-    1: "corner",
+    1: "center",
     2: "edge",
-    3: "center"
+    3: "corner"
 };
 
 export class Piece {

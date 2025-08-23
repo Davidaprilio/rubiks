@@ -113,7 +113,7 @@ function Face(props: { pieces: Facelet[], className?: string }) {
             {props.pieces.map((facelet, index) => (
                 <FaceletEl 
                     key={index} 
-                    value={facelet.toString()} 
+                    facelet={facelet} 
                     onClick={() => console.log(facelet)}
                     className={cn({
                         'bg-red-500': facelet.color.startsWith('R'),
@@ -129,10 +129,14 @@ function Face(props: { pieces: Facelet[], className?: string }) {
     );
 }
 
-function FaceletEl(props: { className: string, value: string, onClick: () => void }) {
+function FaceletEl(props: { className: string, facelet: Facelet, onClick: () => void }) {
     return (
-        <div className={cn('size-10 border border-black rounded flex items-center justify-center', props.className)} onClick={props.onClick}>
-            {props.value}
+        <div 
+            className={cn('size-10 border border-black rounded flex items-center justify-center', props.className)} 
+            onClick={props.onClick}
+            title={`${props.facelet.piece?.hash || props.facelet.toString()} (${props.facelet.piece?.getType() || 'center'})`}
+        >
+            {props.facelet.toString()}
         </div>
     );
 }
