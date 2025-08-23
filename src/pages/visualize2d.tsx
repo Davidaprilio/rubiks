@@ -34,31 +34,34 @@ const notations: Record<Notation|NotationInverse|NotationDouble, string> = {
 }
 
 export default function Visualize2D() {
-    const rubiksRef = useRef<Rubiks>(null!);
+    const rubiksRef = useRef<Rubiks>(null);
     const solverRef = useRef<Rubiks3x3Solver>(null!);
-    const [faceletsState, setFaceletsState] = useState<Facelet[][]>([[], [], [], [], [], []]);
+    const [, setRefresh] = useState<boolean>(false);
 
     useEffect(() => {
         const rubiks = new Rubiks();
         rubiksRef.current = rubiks;
         rubiks.makeCubeState(); // initialize cube state
-        console.log('rubiks', rubiks.getState());
-        setFaceletsState(rubiks.facelets); // snapshot awal
 
         const solver = new Rubiks3x3Solver(rubiks);
         solverRef.current = solver;
         window.solver = solver;
         window.rubiks = rubiks;
+        setRefresh(true);
     }, []);
 
     // panggil ini setiap selesai melakukan move pada rubiksRef.current
-    const refreshCubeState = () => setFaceletsState(rubiksRef.current.facelets);
-
+    const refreshCubeState = () => setRefresh((r) => !r);
+    
     function turnCube(notation: Notation) {
         if (rubiksRef.current) {
             rubiksRef.current.turn(notation);
             refreshCubeState();
         }
+    }
+    
+    if (rubiksRef.current == null) {
+        return null;
     }
 
     return (
@@ -69,19 +72,19 @@ export default function Visualize2D() {
                 <div className="grid grid-rows-3 mx-auto w-fit mb-10">
                     <div className="grid grid-cols-4 w-fit">
                         <div></div>
-                        <Face pieces={faceletsState[2]} className="-rotate-90" />
+                        <Face pieces={rubiksRef.current.facelets[2]} className="-rotate-90" />
                         <div></div>
                         <div></div>
                     </div>
                     <div className="grid grid-cols-4 w-fit">
-                        <Face pieces={faceletsState[4]} className="rotate-90" />
-                        <Face pieces={faceletsState[0]} className="" />
-                        <Face pieces={faceletsState[1]} className="" />
-                        <Face pieces={faceletsState[3]} className="rotate-90" />
+                        <Face pieces={rubiksRef.current.facelets[4]} className="rotate-90" />
+                        <Face pieces={rubiksRef.current.facelets[0]} className="" />
+                        <Face pieces={rubiksRef.current.facelets[1]} className="" />
+                        <Face pieces={rubiksRef.current.facelets[3]} className="rotate-90" />
                     </div>
                     <div className="grid grid-cols-4 w-fit">
                         <div></div>
-                        <Face pieces={faceletsState[5]} />
+                        <Face pieces={rubiksRef.current.facelets[5]} />
                         <div></div>
                         <div></div>
                     </div>
