@@ -1,12 +1,14 @@
+import type { Facelet } from "@/classes/models/facelet";
 import { Rubiks } from "@/classes/rubiks";
 import { Rubiks3x3Solver } from "@/classes/solvers/Rubiks3x3.solver";
-import type { KeyColors, Notation, NotationDouble, NotationInverse } from "@/consts/cube";
+import type { Notation, NotationDouble, NotationInverse } from "@/consts/cube";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 
 declare global {
     interface Window {
         solver: Rubiks3x3Solver;
+        rubiks: Rubiks;
     }
 }
 
@@ -34,22 +36,23 @@ const notations: Record<Notation|NotationInverse|NotationDouble, string> = {
 export default function Visualize2D() {
     const rubiksRef = useRef<Rubiks>(null!);
     const solverRef = useRef<Rubiks3x3Solver>(null!);
-    const [cubeState, setCubeState] = useState<KeyColors[][]>([[], [], [], [], [], []]);
+    const [faceletsState, setFaceletsState] = useState<Facelet[][]>([[], [], [], [], [], []]);
 
     useEffect(() => {
         const rubiks = new Rubiks();
         rubiksRef.current = rubiks;
         rubiks.makeCubeState(); // initialize cube state
         console.log('rubiks', rubiks.getState());
-        setCubeState(rubiks.getState()); // snapshot awal
+        setFaceletsState(rubiks.facelets); // snapshot awal
 
         const solver = new Rubiks3x3Solver(rubiks);
         solverRef.current = solver;
         window.solver = solver;
+        window.rubiks = rubiks;
     }, []);
 
     // panggil ini setiap selesai melakukan move pada rubiksRef.current
-    const refreshCubeState = () => setCubeState(rubiksRef.current.getState());
+    const refreshCubeState = () => setFaceletsState(rubiksRef.current.facelets);
 
     function turnCube(notation: Notation) {
         if (rubiksRef.current) {
@@ -66,19 +69,19 @@ export default function Visualize2D() {
                 <div className="grid grid-rows-3 mx-auto w-fit mb-10">
                     <div className="grid grid-cols-4 w-fit">
                         <div></div>
-                        <Face pieces={cubeState[2]} className="-rotate-90" />
+                        <Face pieces={faceletsState[2]} className="-rotate-90" />
                         <div></div>
                         <div></div>
                     </div>
                     <div className="grid grid-cols-4 w-fit">
-                        <Face pieces={cubeState[4]} className="rotate-90" />
-                        <Face pieces={cubeState[0]} className="" />
-                        <Face pieces={cubeState[1]} className="" />
-                        <Face pieces={cubeState[3]} className="rotate-90" />
+                        <Face pieces={faceletsState[4]} className="rotate-90" />
+                        <Face pieces={faceletsState[0]} className="" />
+                        <Face pieces={faceletsState[1]} className="" />
+                        <Face pieces={faceletsState[3]} className="rotate-90" />
                     </div>
                     <div className="grid grid-cols-4 w-fit">
                         <div></div>
-                        <Face pieces={cubeState[5]} />
+                        <Face pieces={faceletsState[5]} />
                         <div></div>
                         <div></div>
                     </div>
@@ -104,25 +107,32 @@ export default function Visualize2D() {
     )
 }
 
-function Face(props: { pieces: string[], className?: string }) {
+function Face(props: { pieces: Facelet[], className?: string }) {
     return (
         <div className={cn('border grid grid-cols-3', props.className)}>
-            {props.pieces.map((color, index) => (
-                <Piece key={index} className={cn({
-                    'bg-red-500': color.startsWith('R'),
-                    'bg-blue-500': color.startsWith('B'),
-                    'bg-green-500': color.startsWith('G'),
-                    'bg-yellow-400 text-yellow-950': color.startsWith('Y'),
-                    'bg-orange-500': color.startsWith('O'),
-                    'bg-white text-slate-700': color.startsWith('W'),
-                })} value={color} />
+            {props.pieces.map((facelet, index) => (
+                <FaceletEl 
+                    key={index} 
+                    value={facelet.toString()} 
+                    onClick={() => console.log(facelet)}
+                    className={cn({
+                        'bg-red-500': facelet.color.startsWith('R'),
+                        'bg-blue-500': facelet.color.startsWith('B'),
+                        'bg-green-500': facelet.color.startsWith('G'),
+                        'bg-yellow-400 text-yellow-950': facelet.color.startsWith('Y'),
+                        'bg-orange-500': facelet.color.startsWith('O'),
+                        'bg-white text-slate-700': facelet.color.startsWith('W'),
+                    })} 
+                />
             ))}
         </div>
     );
 }
 
-function Piece(props: { className: string, value: string }) {
+function FaceletEl(props: { className: string, value: string, onClick: () => void }) {
     return (
-        <div className={cn('size-10 border border-black rounded flex items-center justify-center', props.className)}>{props.value}</div>
+        <div className={cn('size-10 border border-black rounded flex items-center justify-center', props.className)} onClick={props.onClick}>
+            {props.value}
+        </div>
     );
 }

@@ -1,33 +1,68 @@
 import { CubeFace, mapCubeFaceByIndex, mapCubeFaceByName } from "@/consts/cube";
-import type { Colors, CubeFaceType, FaceIndex, FullRubiksNotation, KeyColors, KeyCubeFace, Notation, NotationLower } from "@/consts/cube";
+import type { Colors, CubeFaceType, FaceIndex, FullRubiksNotation, KeyCubeFace, Notation, NotationLower } from "@/consts/cube";
 import { getArrMatrixIndex, rotateMatrix } from "@/lib/utils";
+import { Face } from "./models/face";
+import type { Piece } from "./models/piece";
+import { Facelet } from "./models/facelet";
+const adjacentIndexMap = ['U', 'R', 'D', 'L'] as const;
 
 export class Rubiks {
     readonly debug;
-    private readonly size = 3;
-    private cubeState: KeyColors[][] = [];
+    readonly size = 3;
+    public facelets: Facelet[][] = [];
+    public faces: Face[] = [];
+    public pieces: Piece[] = [];
 
     constructor(options?: { debug?: boolean }) {
-        this.cubeState = Array.from({ length: 6 }, () => Array(this.size * this.size).fill(''));
         this.debug = options?.debug ?? false;
     }
 
     makeCubeState() {
-        this.cubeState = []
+        this.facelets = []
+        this.faces = []
         for (const key in CubeFace) {
             const face = CubeFace[key as Colors];
             if (face.faceIndex === null) continue; // Skip the base face
             // this.cubeState[face.faceIndex] = Array(9).fill(CubeFace[key as Colors].code)
-            this.cubeState[face.faceIndex] = Array.from({ length: this.size * this.size }, (_, k) => CubeFace[key as Colors].code + (k + 1)) as KeyColors[];
+            const faceInstance = new Face(this, face.faceIndex);
+            this.facelets[face.faceIndex] = Array.from({ length: this.size * this.size }, () => {
+                return faceInstance.addFacelet(face.code);
+            });
+            this.faces.push(faceInstance);
         }
-        return this.cubeState;
+
+        for (const face of this.faces) {
+            face.make();
+        }
+        return this.facelets;
+    }
+
+    getPiece(facelet: Facelet): Piece | undefined;
+    getPiece(piece: Piece|string): Piece | undefined;
+    getPiece(arg: Facelet | Piece | string): Piece | undefined {
+        return this.pieces.find(p => {
+            if (arg instanceof Facelet) {
+                return p.hash.includes(arg.toString())
+            };
+            if (typeof arg === "string") return p.hash === arg;
+            return p === arg;
+        });
+    }
+
+    addPieces(piece: Piece) {
+        if (this.pieces.some(p => p.hash === piece.hash)) return;
+        this.pieces.push(piece);
+    }
+
+    getFaceletAtFace(faceIndex: number) {
+        return this.facelets[faceIndex];
     }
 
     getState() {
-        if (this.cubeState.length === 0) {
+        if (this.facelets.length === 0) {
             this.makeCubeState();
         }
-        return JSON.parse(JSON.stringify(this.cubeState)) as KeyColors[][];
+        return this.facelets.map(face => face.map(facelet => facelet.toString()));
     }
 
     getAdjacentFaces(faceIndex: number): [KeyCubeFace, KeyCubeFace, KeyCubeFace, KeyCubeFace] | null {
@@ -65,7 +100,7 @@ export class Rubiks {
         }
         const selectedColor = adjacentFaces[sideToIndexMap[side]]
         const selectedFace = CubeFace[selectedColor]
-        const facePieces = this.cubeState[selectedFace.faceIndex!];
+        const facePieces = this.facelets[selectedFace.faceIndex!];
         let indexReflect = Array.from({ length: facePieces.length }, (_, i) => i);
 
         // centerFaceIndex genap U & R = clockwise | L & D = double-clockwise
@@ -89,6 +124,26 @@ export class Rubiks {
 
         const mappedPickPieceIndex = pickPieceIndex.map(index => indexReflectMap[index]);
         return mappedPickPieceIndex;
+    }
+
+    getFaceIndexAdjacent(index: FaceIndex, pick: number[]): (number[]|null)[] {
+        const adjacentFaces = this.getAdjacentFaces(index);
+        if (!adjacentFaces) return [];
+        return adjacentFaces.map((_, i) => {
+            return this.getPieceOfAdjacentFace(index, this.getIndexAdjacentCode(i)!, pick)!;
+        });
+    }
+
+    getIndexAdjacentCode(index: number): Exclude<Notation, 'B' | 'F'> | null {
+        return adjacentIndexMap[index] || null;
+    }
+
+    getFace(index: FaceIndex): Face | null {
+        return this.faces[index] || null;
+    }
+
+    getFaceByColor(color: KeyCubeFace): Face | null {
+        return this.getFace(CubeFace[color].faceIndex!);
     }
 
     /**
@@ -122,7 +177,7 @@ export class Rubiks {
      * Turns the Rubik's cube face based on the notation.
      */
     turnNotation(notation: Notation | NotationLower, clockwise: boolean = true) {
-        if (this.cubeState.length === 0) this.makeCubeState();
+        if (this.facelets.length === 0) this.makeCubeState();
 
         switch (notation) {
             case 'U':
@@ -155,7 +210,7 @@ export class Rubiks {
     }
 
     rotateFace(faceIndex: number, clockwise: boolean = true, withMiddle: boolean = true) {
-        this.cubeState[faceIndex] = rotateMatrix(this.cubeState[faceIndex], this.size, clockwise);
+        this.facelets[faceIndex] = rotateMatrix(this.facelets[faceIndex], this.size, clockwise);
         this.pivotFace(faceIndex, clockwise);
         if (withMiddle) {
             this.pivotFace(faceIndex, clockwise, 1);
@@ -183,7 +238,7 @@ export class Rubiks {
         // side faces rotation
         const adjacent = this.getAdjacentFaces(faceIndex);
         if (adjacent) {
-            let tmpPieces: [number, KeyColors][] = [];
+            let tmpPieces: [number, Facelet][] = [];
             if (!clockwise) {
                 adjacent.reverse();
                 adjacent.unshift(adjacent.pop()!); // Move last to first
@@ -210,7 +265,7 @@ export class Rubiks {
                 if (index === 0) {
                     const lastAdjacent = 3
                     const lastFaceIndex = CubeFace[arrAdjacent[3]].faceIndex!
-                    tmpPieces = getArrMatrixIndex(this.cubeState[lastFaceIndex], dirMove(lastAdjacent), this.size, matrixIndex);
+                    tmpPieces = getArrMatrixIndex(this.facelets[lastFaceIndex], dirMove(lastAdjacent), this.size, matrixIndex);
                     this.logger.log('initial tmpPieces:', tmpPieces, {
                         lastAdjacent,
                         color: arrAdjacent[lastAdjacent],
@@ -218,7 +273,7 @@ export class Rubiks {
                     });
                 }
                 const sideFaceIndex = CubeFace[adjacentFaceName].faceIndex!
-                const safePieces = getArrMatrixIndex(this.cubeState[sideFaceIndex], dirMove(index), this.size, matrixIndex);
+                const safePieces = getArrMatrixIndex(this.facelets[sideFaceIndex], dirMove(index), this.size, matrixIndex);
                 this.logger.log('safePieces:', safePieces);
                 if (clockwise && (index === 0 || index === 2)) {
                     tmpPieces.reverse();
@@ -228,7 +283,7 @@ export class Rubiks {
                     tmpPieces.reverse();
                 }
                 tmpPieces.forEach(([, color], i) => {
-                    this.cubeState[sideFaceIndex][safePieces[i][0]] = color;
+                    this.facelets[sideFaceIndex][safePieces[i][0]] = color;
                 });
                 tmpPieces = safePieces;
             });
@@ -238,13 +293,13 @@ export class Rubiks {
     }
 
     printState() {
-        if (this.cubeState.length === 0) {
+        if (this.facelets.length === 0) {
             this.makeCubeState();
         }
         console.log('Current Cube State:');
         let faceStatePosition = '';
-        for (let i = 0; i < this.cubeState.length; i++) {
-            faceStatePosition += `${i} ${mapCubeFaceByIndex[i].code[0]}: ${this.cubeState[i].join(' ')}\n`;
+        for (let i = 0; i < this.facelets.length; i++) {
+            faceStatePosition += `${i} ${mapCubeFaceByIndex[i].code[0]}: ${this.facelets[i].join(' ')}\n`;
         }
 
         console.log(faceStatePosition);
@@ -253,9 +308,9 @@ export class Rubiks {
         //       | U(Y) |
         // L(B) | F(R) | R(G) | B(O)
         //     | D(W) |
-        const emptySpace = Array(this.size).fill(' '.repeat(this.cubeState[0][0].length)).join(' ');
+        const emptySpace = Array(this.size).fill(' '.repeat(this.size * this.size)).join(' ');
 
-        const getStateByName = (name: CubeFaceType['name']) => [...this.cubeState[mapCubeFaceByName[name].faceIndex!]];
+        const getStateByName = (name: CubeFaceType['name']) => [...this.facelets[mapCubeFaceByName[name].faceIndex!]];
         const c2dArr = [
             [null, rotateMatrix(getStateByName('Up'), this.size, false), null, null],
             [rotateMatrix(getStateByName('Left'), this.size, true), getStateByName('Front'), getStateByName('Right'), rotateMatrix(getStateByName('Back'), this.size, true)],
