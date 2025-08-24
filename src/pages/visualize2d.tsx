@@ -37,24 +37,36 @@ export default function Visualize2D() {
     const rubiksRef = useRef<Rubiks>(null);
     const solverRef = useRef<Rubiks3x3Solver>(null!);
     const [, setRefresh] = useState<boolean>(false);
-
+    const [step, setStep] = useState<string>('');
     useEffect(() => {
         const rubiks = new Rubiks();
         rubiksRef.current = rubiks;
         rubiks.makeCubeState(); // initialize cube state
+        // rubiks.turns('L R Bi Ri Fi F Li L2 R2 Ri Di U Ri R2 B2 B F Li Ui Di U2 U2 Fi F2 U Li U2 Ri');
+        rubiks.turns('R U Ri U R U2 Ri');
 
         const solver = new Rubiks3x3Solver(rubiks);
         solverRef.current = solver;
         window.solver = solver;
         window.rubiks = rubiks;
+
+        console.log({
+            // hasCross: solver.hasCross()
+            // getFaceF2L: solver.getFaceF2L(4)
+        });
         setRefresh(true);
     }, []);
+
+    useEffect(() => {
+        if(step.length) console.log(step);
+    }, [step]);
 
     // panggil ini setiap selesai melakukan move pada rubiksRef.current
     const refreshCubeState = () => setRefresh((r) => !r);
     
     function turnCube(notation: Notation) {
         if (rubiksRef.current) {
+            setStep((prevStep) => `${prevStep} ${notation}`.trimStart());
             rubiksRef.current.turn(notation);
             refreshCubeState();
         }

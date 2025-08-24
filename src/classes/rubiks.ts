@@ -28,7 +28,7 @@ export class Rubiks {
             this.facelets[face.faceIndex] = Array.from({ length: this.size * this.size }, () => {
                 return faceInstance.addFacelet(face.code);
             });
-            this.faces.push(faceInstance);
+            this.faces[face.faceIndex] = faceInstance;
         }
 
         for (const face of this.faces) {
@@ -76,6 +76,25 @@ export class Rubiks {
     }
 
     /**
+     * Get the normalized rotation based on the center face index and the side.
+     * centerFaceIndex genap U & R = clockwise | L & D = double-clockwise
+     * centerFaceIndex ganjil U & R = nothing | D & L = counter-clockwise
+     * -1: counter-clockwise, 
+     *  0: nothing, 
+     *  1: clockwise, 
+     *  2: double-clockwise
+     */
+    getNormalizeRotation(toFaceIndex: number, side: Exclude<Notation, 'B' | 'F'>): number {
+        let rotate = 0; 
+        if (toFaceIndex % 2 === 0) {
+            rotate = (side === 'U' || side === 'R') ? 1 : 2;
+        } else {
+            rotate = (side === 'U' || side === 'R') ? 0 : -1;
+        }
+        return rotate
+    }
+
+    /**
      * Get the piece of an adjacent face based on the center face index, side, and piece index.
      * this will automate fix direction of adjacent pieces index
      * Example: 
@@ -102,15 +121,7 @@ export class Rubiks {
         const selectedFace = CubeFace[selectedColor]
         const facePieces = this.facelets[selectedFace.faceIndex!];
         let indexReflect = Array.from({ length: facePieces.length }, (_, i) => i);
-
-        // centerFaceIndex genap U & R = clockwise | L & D = double-clockwise
-        // centerFaceIndex ganjil U & R = nothing | D & L = counter-clockwise
-        let rotate = 0; // -1: counter-clockwise, 0: nothing, 1: clockwise, 2: double-clockwise
-        if (centerFaceIndex % 2 === 0) {
-            rotate = (side === 'U' || side === 'R') ? 1 : 2;
-        } else {
-            rotate = (side === 'U' || side === 'R') ? 0 : -1;
-        }
+        let rotate = this.getNormalizeRotation(centerFaceIndex, side);
 
         while (rotate !== 0) {
             indexReflect = rotateMatrix(indexReflect, this.size, rotate > 0);
