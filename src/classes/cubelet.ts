@@ -51,7 +51,7 @@ const CubeletType: CubeletTypeKey[] = [
 ]
 
 export class Cubelet {
-    protected id: number;
+    readonly id: number;
 	public obj: THREE.Object3D;
     private mesh: THREE.Mesh;
     protected size: number = 1;
@@ -314,5 +314,9 @@ export abstract class CubeletAction {
 
     setRadius(radius: number, onComplete?: (() => void)) {
         this.cubelets.forEach( c => c.setRadius(radius, onComplete) )
+    }
+
+    rotate(rotation: 'X'|'Y'|'Z', degrees: number, cubeCallback?: ((cubelets: Cubelet[]) => void)) {
+        this.cubelets.forEach( c => c.rotate(rotation, degrees, cubeCallback) )
     }
 }

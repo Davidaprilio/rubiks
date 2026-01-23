@@ -80,17 +80,55 @@ export class Cube {
         this.side.equator.add(...this.getIndexRange('y', 1).map(i => this.cubelets[i]))
         this.side.down.add(...this.getIndexRange('y', 2).map(i => this.cubelets[i]))
 
-        this.side.left.add(...this.getIndexRange('x', 0).map(i => this.cubelets[i]))
+        this.side.right.add(...this.getIndexRange('x', 0).map(i => this.cubelets[i]))
         this.side.middle.add(...this.getIndexRange('x', 1).map(i => this.cubelets[i]))
-        this.side.right.add(...this.getIndexRange('x', 2).map(i => this.cubelets[i]))
+        this.side.left.add(...this.getIndexRange('x', 2).map(i => this.cubelets[i]))
 
-        this.side.front.add(...this.getIndexRange('z', 2).map(i => this.cubelets[i]))
+        this.side.front.add(...this.getIndexRange('z', 0).map(i => this.cubelets[i]))
         this.side.standing.add(...this.getIndexRange('z', 1).map(i => this.cubelets[i]))
-        this.side.back.add(...this.getIndexRange('z', 0).map(i => this.cubelets[i]))
+        this.side.back.add(...this.getIndexRange('z', 2).map(i => this.cubelets[i]))
     }
 
     twist(notation: TwistNotation, onComplete?: (() => void)) {
-        
+        const DEG = 90;
+        const DEG2 = 180;
+        if (notation === 'U') {
+            this.side.up.rotate('Y', DEG, onComplete);
+        } else if (notation === "U'") {
+            this.side.up.rotate('Y', -DEG, onComplete);
+        } else if (notation === 'U2') {
+            this.side.up.rotate('Y', DEG2, onComplete);
+        } else if (notation === 'D') {
+            this.side.down.rotate('Y', -DEG, onComplete);
+        } else if (notation === "D'") {
+            this.side.down.rotate('Y', DEG, onComplete);
+        } else if (notation === 'D2') {
+            this.side.down.rotate('Y', DEG2, onComplete);
+        } else if (notation === 'L') {
+            this.side.left.rotate('X', -DEG, onComplete);
+        } else if (notation === "L'") {
+            this.side.left.rotate('X', DEG, onComplete);
+        } else if (notation === 'L2') {
+            this.side.left.rotate('X', DEG2, onComplete);
+        } else if (notation === 'R') {
+            this.side.right.rotate('X', DEG, onComplete);
+        } else if (notation === "R'") {
+            this.side.right.rotate('X', -DEG, onComplete);
+        } else if (notation === 'R2') {
+            this.side.right.rotate('X', DEG2, onComplete);
+        } else if (notation === 'F') {
+            this.side.front.rotate('Z', DEG, onComplete);
+        } else if (notation === "F'") {
+            this.side.front.rotate('Z', -DEG, onComplete);
+        } else if (notation === 'F2') {
+            this.side.front.rotate('Z', DEG2, onComplete);
+        } else if (notation === 'B') {
+            this.side.back.rotate('Z', -DEG, onComplete);
+        } else if (notation === "B'") {
+            this.side.back.rotate('Z', DEG, onComplete);
+        } else if (notation === 'B2') {
+            this.side.back.rotate('Z', DEG2, onComplete);
+        }
     }
 
     /**
@@ -105,7 +143,7 @@ export class Cube {
      */
     getIndexRange(axis: 'x' | 'y' | 'z', layer: number): number[] {
         const arr: number[] = [];
-        if (axis === 'x') {
+        if (axis === 'z') {
             const size = this.size * this.size;
             const start = layer * size;
             for (let i = 0; i < size; i++) {
@@ -118,9 +156,9 @@ export class Cube {
                     arr.push(start + j);
                 }
             }
-        } else { // axis === 'z'
+        } else { // axis === 'x'
             const size = this.size * this.size;
-            layer = (this.size - 1) - layer; // invert for z axis
+            layer = (this.size - 1) - layer; // invert for x axis
             for (let i = 0; i < this.size; i++) {
                 let start = (size * i) + layer
                 for (let j = 0; j < this.size; j++) {   
