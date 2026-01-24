@@ -76,59 +76,263 @@ export class Cube {
         })
 
 
-        this.side.up.add(...this.getIndexRange('y', 0).map(i => this.cubelets[i]))
-        this.side.equator.add(...this.getIndexRange('y', 1).map(i => this.cubelets[i]))
-        this.side.down.add(...this.getIndexRange('y', 2).map(i => this.cubelets[i]))
+        this.side.up.replace(...this.getIndexRange('y', 0).map(i => this.cubelets[i]))
+        this.side.equator.replace(...this.getIndexRange('y', 1).map(i => this.cubelets[i]))
+        this.side.down.replace(...this.getIndexRange('y', 2).map(i => this.cubelets[i]))
 
-        this.side.right.add(...this.getIndexRange('x', 0).map(i => this.cubelets[i]))
-        this.side.middle.add(...this.getIndexRange('x', 1).map(i => this.cubelets[i]))
-        this.side.left.add(...this.getIndexRange('x', 2).map(i => this.cubelets[i]))
+        this.side.right.replace(...this.getIndexRange('x', 0).map(i => this.cubelets[i]))
+        this.side.middle.replace(...this.getIndexRange('x', 1).map(i => this.cubelets[i]))
+        this.side.left.replace(...this.getIndexRange('x', 2).map(i => this.cubelets[i]))
 
-        this.side.front.add(...this.getIndexRange('z', 0).map(i => this.cubelets[i]))
-        this.side.standing.add(...this.getIndexRange('z', 1).map(i => this.cubelets[i]))
-        this.side.back.add(...this.getIndexRange('z', 2).map(i => this.cubelets[i]))
+        this.side.front.replace(...this.getIndexRange('z', 0).map(i => this.cubelets[i]))
+        this.side.standing.replace(...this.getIndexRange('z', 1).map(i => this.cubelets[i]))
+        this.side.back.replace(...this.getIndexRange('z', 2).map(i => this.cubelets[i]))
     }
 
-    twist(notation: TwistNotation, onComplete?: (() => void)) {
+    async runNotation(sequence: string, onComplete?: ((cubelets: Cubelet[]) => void)) {
+        const moves = sequence.trim().split('')
+        for( let i = 0; i < moves.length; i++ ) {
+            let move = moves[i]
+            const nextMove = moves[i+1]
+            if (nextMove === "'" || nextMove === "2") {
+                move += nextMove
+                i++;
+            }
+            console.log(move);
+            await this.twist(move as TwistNotation)
+        }
+        if( onComplete ) onComplete( this.cubelets )
+    }
+
+    async twist(notation: TwistNotation, onComplete?: ((cubelets: Cubelet[]) => void)) {
         const DEG = 90;
         const DEG2 = 180;
-        if (notation === 'U') {
-            this.side.up.rotate('Y', DEG, onComplete);
-        } else if (notation === "U'") {
-            this.side.up.rotate('Y', -DEG, onComplete);
-        } else if (notation === 'U2') {
-            this.side.up.rotate('Y', DEG2, onComplete);
-        } else if (notation === 'D') {
-            this.side.down.rotate('Y', -DEG, onComplete);
-        } else if (notation === "D'") {
-            this.side.down.rotate('Y', DEG, onComplete);
-        } else if (notation === 'D2') {
-            this.side.down.rotate('Y', DEG2, onComplete);
-        } else if (notation === 'L') {
-            this.side.left.rotate('X', -DEG, onComplete);
-        } else if (notation === "L'") {
-            this.side.left.rotate('X', DEG, onComplete);
-        } else if (notation === 'L2') {
-            this.side.left.rotate('X', DEG2, onComplete);
-        } else if (notation === 'R') {
-            this.side.right.rotate('X', DEG, onComplete);
-        } else if (notation === "R'") {
-            this.side.right.rotate('X', -DEG, onComplete);
-        } else if (notation === 'R2') {
-            this.side.right.rotate('X', DEG2, onComplete);
-        } else if (notation === 'F') {
-            this.side.front.rotate('Z', DEG, onComplete);
-        } else if (notation === "F'") {
-            this.side.front.rotate('Z', -DEG, onComplete);
-        } else if (notation === 'F2') {
-            this.side.front.rotate('Z', DEG2, onComplete);
-        } else if (notation === 'B') {
-            this.side.back.rotate('Z', -DEG, onComplete);
-        } else if (notation === "B'") {
-            this.side.back.rotate('Z', DEG, onComplete);
-        } else if (notation === 'B2') {
-            this.side.back.rotate('Z', DEG2, onComplete);
+
+        const doSwap = (fnCallback: () => void) => {
+            fnCallback();
+            if (onComplete) onComplete(this.cubelets);
         }
+
+
+        const swap = this.cubelets.slice();
+        if (notation === 'U') {
+            await this.side.up.rotate('Y', DEG)
+            doSwap(() => {
+                this.cubelets[0] = swap[2];
+                this.cubelets[1] = swap[11];
+                this.cubelets[2] = swap[20];
+                this.cubelets[11] = swap[19];
+                this.cubelets[20] = swap[18];
+                this.cubelets[19] = swap[9];
+                this.cubelets[18] = swap[0];
+                this.cubelets[9] = swap[1];
+            });
+        } else if (notation === "U'") {
+            await this.side.up.rotate('Y', -DEG);
+            doSwap(() => {
+                this.cubelets[0] = swap[18];
+                this.cubelets[1] = swap[9];
+                this.cubelets[2] = swap[0];
+                this.cubelets[9] = swap[19];
+                this.cubelets[18] = swap[20];
+                this.cubelets[19] = swap[11];
+                this.cubelets[20] = swap[2];
+                this.cubelets[11] = swap[1];
+            });
+        } else if (notation === 'U2') {
+            await this.side.up.rotate('Y', DEG2);
+            doSwap(() => {
+                this.cubelets[0] = swap[20];
+                this.cubelets[20] = swap[0];
+                this.cubelets[2] = swap[18];
+                this.cubelets[18] = swap[2];
+                this.cubelets[1] = swap[19];
+                this.cubelets[19] = swap[1];
+                this.cubelets[9] = swap[11];
+                this.cubelets[11] = swap[9];
+            });
+        } else if (notation === 'D') {
+            await this.side.down.rotate('Y', -DEG);
+            doSwap(() => {
+                this.cubelets[6] = swap[24];
+                this.cubelets[7] = swap[15];
+                this.cubelets[8] = swap[6];
+                this.cubelets[15] = swap[25];
+                this.cubelets[24] = swap[26];
+                this.cubelets[25] = swap[17];
+                this.cubelets[26] = swap[8];
+                this.cubelets[17] = swap[7];
+            });
+        } else if (notation === "D'") {
+            await this.side.down.rotate('Y', DEG);
+            doSwap(() => {
+                this.cubelets[6] = swap[8];
+                this.cubelets[7] = swap[17];
+                this.cubelets[8] = swap[26];
+                this.cubelets[17] = swap[25];
+                this.cubelets[26] = swap[24];
+                this.cubelets[25] = swap[15];
+                this.cubelets[24] = swap[6];
+                this.cubelets[15] = swap[7];
+            });
+        } else if (notation === 'D2') {
+            await this.side.down.rotate('Y', DEG2);
+            doSwap(() => {
+                this.cubelets[26] = swap[6];
+                this.cubelets[6] = swap[26];
+                this.cubelets[8] = swap[24];
+                this.cubelets[24] = swap[8];
+                this.cubelets[17] = swap[15];
+                this.cubelets[15] = swap[17];
+                this.cubelets[7] = swap[25];
+                this.cubelets[25] = swap[7];
+            });
+        } else if (notation === 'L') {
+            await this.side.left.rotate('X', -DEG);
+            doSwap(() => {
+                this.cubelets[0] = swap[18];
+                this.cubelets[6] = swap[0];
+                this.cubelets[18] = swap[24];
+                this.cubelets[24] = swap[6];
+                this.cubelets[3] = swap[9];
+                this.cubelets[9] = swap[21];
+                this.cubelets[15] = swap[3];
+                this.cubelets[21] = swap[15];
+            });
+        } else if (notation === "L'") {
+            await this.side.left.rotate('X', DEG);
+            doSwap(() => {
+                this.cubelets[0] = swap[6];
+                this.cubelets[6] = swap[24];
+                this.cubelets[18] = swap[0];
+                this.cubelets[24] = swap[18];
+                this.cubelets[3] = swap[15];
+                this.cubelets[9] = swap[3];
+                this.cubelets[15] = swap[21];
+                this.cubelets[21] = swap[9];
+            });
+        } else if (notation === 'L2') {
+            await this.side.left.rotate('X', DEG2);
+            doSwap(() => {
+                this.cubelets[0] = swap[24];
+                this.cubelets[6] = swap[18];
+                this.cubelets[18] = swap[6];
+                this.cubelets[24] = swap[0];
+                this.cubelets[3] = swap[21];
+                this.cubelets[9] = swap[15];
+                this.cubelets[15] = swap[9];
+                this.cubelets[21] = swap[3];
+            });
+        } else if (notation === 'R') {
+            await this.side.right.rotate('X', DEG);
+            doSwap(() => {
+                this.cubelets[2] = swap[8];
+                this.cubelets[5] = swap[17];
+                this.cubelets[8] = swap[26];
+                this.cubelets[17] = swap[23];
+                this.cubelets[26] = swap[20];
+                this.cubelets[23] = swap[11];
+                this.cubelets[20] = swap[2];
+                this.cubelets[11] = swap[5];
+            }); 
+        } else if (notation === "R'") {
+            await this.side.right.rotate('X', -DEG);
+            doSwap(() => {
+                this.cubelets[2] = swap[20];
+                this.cubelets[5] = swap[11];
+                this.cubelets[8] = swap[2];
+                this.cubelets[11] = swap[23];
+                this.cubelets[20] = swap[26];
+                this.cubelets[23] = swap[17];
+                this.cubelets[26] = swap[8];
+                this.cubelets[17] = swap[5];
+            });
+        } else if (notation === 'R2') {
+            await this.side.right.rotate('X', DEG2);
+            doSwap(() => {
+                this.cubelets[8] = swap[20];
+                this.cubelets[20] = swap[8];
+                this.cubelets[2] = swap[26];  
+                this.cubelets[26] = swap[2];
+                this.cubelets[5] = swap[23];
+                this.cubelets[23] = swap[5];
+                this.cubelets[17] = swap[11];
+                this.cubelets[11] = swap[17];
+            });
+        } else if (notation === 'F') {
+            await this.side.front.rotate('Z', DEG);
+            doSwap(() => {
+                this.cubelets[0] = swap[6];
+                this.cubelets[1] = swap[3];
+                this.cubelets[2] = swap[0];
+                this.cubelets[3] = swap[7];
+                this.cubelets[6] = swap[8];
+                this.cubelets[7] = swap[5];
+                this.cubelets[8] = swap[2];
+                this.cubelets[5] = swap[1];
+            });
+        } else if (notation === "F'") {
+            await this.side.front.rotate('Z', -DEG);
+            doSwap(() => {
+                this.cubelets[0] = swap[2];
+                this.cubelets[1] = swap[5];
+                this.cubelets[2] = swap[8];
+                this.cubelets[3] = swap[1];
+                this.cubelets[6] = swap[0];
+                this.cubelets[7] = swap[3];
+                this.cubelets[8] = swap[6];
+                this.cubelets[5] = swap[7];
+            });
+        } else if (notation === 'F2') {
+            await this.side.front.rotate('Z', DEG2);
+            doSwap(() => {
+                this.cubelets[0] = swap[8];
+                this.cubelets[1] = swap[7];
+                this.cubelets[2] = swap[6];
+                this.cubelets[3] = swap[5];
+                this.cubelets[6] = swap[2];
+                this.cubelets[7] = swap[1];
+                this.cubelets[8] = swap[0];
+                this.cubelets[5] = swap[3];
+            });
+        } else if (notation === 'B') {
+            await this.side.back.rotate('Z', -DEG);
+            doSwap(() => {
+                this.cubelets[18] = swap[20];
+                this.cubelets[19] = swap[23];
+                this.cubelets[20] = swap[26];
+                this.cubelets[21] = swap[19];
+                this.cubelets[24] = swap[18];
+                this.cubelets[25] = swap[21];
+                this.cubelets[26] = swap[24];
+                this.cubelets[23] = swap[25];
+            });
+        } else if (notation === "B'") {
+            await this.side.back.rotate('Z', DEG);
+            doSwap(() => {
+                this.cubelets[18] = swap[24];
+                this.cubelets[19] = swap[21];
+                this.cubelets[20] = swap[18];
+                this.cubelets[21] = swap[25];
+                this.cubelets[24] = swap[26];
+                this.cubelets[25] = swap[23];
+                this.cubelets[26] = swap[20];
+                this.cubelets[23] = swap[19];
+            });
+        } else if (notation === 'B2') {
+            await this.side.back.rotate('Z', DEG2);
+            doSwap(() => {
+                this.cubelets[18] = swap[26];
+                this.cubelets[19] = swap[25];
+                this.cubelets[20] = swap[24];
+                this.cubelets[21] = swap[23];
+                this.cubelets[24] = swap[20];
+                this.cubelets[25] = swap[19];
+                this.cubelets[26] = swap[18];
+                this.cubelets[23] = swap[21];
+            });
+        }
+        this.map()
     }
 
     /**

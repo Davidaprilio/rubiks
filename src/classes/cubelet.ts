@@ -214,7 +214,7 @@ export class Cubelet {
 
     //  We can rotate this Cublet on the X, Y, and Z axes
 	//  both clockwise and anticlockwise.
-	public rotate(rotation: 'X'|'Y'|'Z', degrees: number, cubeCallback?: ((cubelets: Cubelet[]) => void)) {
+	public rotate(rotation: 'X'|'Y'|'Z', degrees: number, cubeCallback?: ((cubelet: Cubelet, remaps: { x: number, y: number, z: number }) => void)) {
 
 			let
 			xTarget = 0,
@@ -263,8 +263,6 @@ export class Cubelet {
 			let 
 			twistDuration = this.cube !== undefined ? this.cube.twistDuration : SECOND,
 			twistDurationScaled = Math.max.apply(null, [degrees.abs().scale( 0, 90, 0, twistDuration ), 0.05])
-			console.log({twistDuration, twistDurationScaled});
-
 
 			//  And now for the rotation tween itself...
 			//  It feels very wrong to me that we're going to invert the coordinate space here
@@ -282,6 +280,17 @@ export class Cubelet {
 					//  And now that we've retained that rotation information
 					//  we can safely reset the anchor's rotation:
 					this.obj.rotation.set(0, 0, 0)
+
+                    //  Here's some complexity.
+                    //  We need to support partial rotations of arbitrary degrees
+                    //  yet ensure our internal model is always in a valid state.
+                    //  This means only remapping the Cubelet when it makes sense
+                    //  and also remapping the Cube if this Cubelet is allowed to do so.
+                    let
+                    xRemaps = this.x.divide(90).round().subtract(this.xPrevious.divide(90).round()).abs(),
+                    yRemaps = this.y.divide(90).round().subtract(this.yPrevious.divide(90).round()).abs(),
+                    zRemaps = this.z.divide(90).round().subtract(this.zPrevious.divide(90).round()).abs()
+                    const remaps = { x: xRemaps, y: yRemaps, z: zRemaps }
 
 					if(this.x.modulo( 90 ).abs() < threshold ) {
 						this.x = 0
@@ -302,6 +311,8 @@ export class Cubelet {
 						this.isEngagedZ = false
 					}
 
+                    if (cubeCallback instanceof Function )cubeCallback(this, remaps)
+
 					//  Phew! Now we can turn off the tweening flag.
 					this.isTweening = false
 				}
@@ -312,11 +323,32 @@ export class Cubelet {
 export abstract class CubeletAction {
     public cubelets: Cubelet[] = []
 
-    setRadius(radius: number, onComplete?: (() => void)) {
-        this.cubelets.forEach( c => c.setRadius(radius, onComplete) )
+
+    private async applyToCubelets<T>(action: (cubelet: Cubelet, i: number) => Promise<T> ) {
+        return Promise.all(this.cubelets.map((c, i) => {
+            return action(c, i)
+        }))
     }
 
-    rotate(rotation: 'X'|'Y'|'Z', degrees: number, cubeCallback?: ((cubelets: Cubelet[]) => void)) {
-        this.cubelets.forEach( c => c.rotate(rotation, degrees, cubeCallback) )
+    async setRadius(radius: number, onEachComplete?: ((cubelet: Cubelet, i: number) => void)) {
+        return this.applyToCubelets((cubelet, i) => {
+            return new Promise<Cubelet>((resolve) => {
+                cubelet.setRadius(radius, () => {
+                    if (onEachComplete) onEachComplete(cubelet, i);
+                    resolve(cubelet);
+                })
+            })
+        })
+    }
+
+    rotate(rotation: 'X'|'Y'|'Z', degrees: number, onEachComplete?: ((cubelet: Cubelet, i: number) => void)) {
+        return this.applyToCubelets((cubelet, i) => {
+            return new Promise<Cubelet>((resolve) => {
+                cubelet.rotate(rotation, degrees, () => {
+                    if (onEachComplete) onEachComplete(cubelet, i);
+                    resolve(cubelet);                    
+                })
+            })
+        })
     }
 }

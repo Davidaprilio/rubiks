@@ -15,6 +15,10 @@ export class Slice extends CubeletAction {
         this.cubelets.push(...cubelets)
     }
 
+    replace(...cubelets: Cubelet[]) {
+        this.cubelets = cubelets
+    }
+
     getIdCubelets(): number[] {
         return this.cubelets.map( c => c.id )
     }
