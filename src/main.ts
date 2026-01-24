@@ -3,14 +3,15 @@ import './utils/number'
 import * as THREE from 'three'
 import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 import { Cube } from './classes/cube';
+import Stats from 'three/examples/jsm/libs/stats.module.js';
 
 function setupThree() {
   //  First let's create a Scene object.
 	const scene = new THREE.Scene()
 
 	const 
-	// FIELD_OF_VIEW = 45,
-	FIELD_OF_VIEW = 75,
+	FIELD_OF_VIEW = 45,
+	// FIELD_OF_VIEW = 75,
 	WIDTH         = window.innerWidth,
 	HEIGHT        = window.innerHeight,
 	ASPECT_RATIO  = WIDTH / HEIGHT,
@@ -18,7 +19,7 @@ function setupThree() {
 	FAR           = 1000
 
 	const camera = new THREE.PerspectiveCamera( FIELD_OF_VIEW, ASPECT_RATIO, NEAR, FAR )
-	camera.position.z = 5
+	camera.position.z = 10
 	camera.lookAt( scene.position )
 	scene.add( camera )
 
@@ -50,6 +51,10 @@ function resizeRendererToDisplaySize(renderer: THREE.WebGLRenderer) {
 function main() {
   const { scene, camera, renderer } = setupThree()
 
+  const stats = new Stats();
+  document.body.appendChild( stats.dom );
+
+
   const trackballControl = new TrackballControls( camera, renderer.domElement );
   trackballControl.rotateSpeed = 5;
 
@@ -57,7 +62,6 @@ function main() {
   scene.add( axesHelper );
 
   const c = new Cube()
-  c.setRadius(0.4)
   scene.add( c.threeObj )
   window.cube = c
 
@@ -67,8 +71,8 @@ function main() {
   scene.add( light )
 
   // animation loop
-  function animate() {
-
+  const animate: XRFrameRequestCallback = () => {
+    stats.update();
     if (resizeRendererToDisplaySize(renderer)) {
       const canvas = renderer.domElement;
       camera.aspect = canvas.clientWidth / canvas.clientHeight;

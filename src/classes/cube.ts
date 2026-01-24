@@ -7,7 +7,8 @@ export class Cube {
     public size = 3;
     public cubelets: Cubelet[] = [];
     readonly threeObj: THREE.Object3D;
-    public twistDuration: number = 1; // in seconds
+    public twistDuration: number = .5; // in seconds
+    public doubleTwistDuration: number = .8; // in seconds
     public groups = {
         core: new Group(),
         centers: new Group(),

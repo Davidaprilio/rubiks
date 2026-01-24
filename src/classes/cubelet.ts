@@ -33,6 +33,7 @@ import { Text } from "troika-three-text";
 import type { Cube } from './cube';
 import { gsap } from "gsap";
 
+const GSAP_SEC = 1
 const boxGeometry = new THREE.BoxGeometry();
 
 interface CubeletSticker {
@@ -189,23 +190,16 @@ export class Cubelet {
 
         radius = radius || 0
         if(this.radius !== radius) {
-            //  Here's some extra cuteness to make the tween's duration
-            //  proportional to the distance traveled.
-            const SECOND = 14_000
-            var tweenDuration = ( this.radius - radius ).abs().scale(0, 100, 0, SECOND)
-            const duration = tweenDuration / 1000
-
-            //  We need a "that = this" in order to set this.radius = radius
-            //  from inside the anonymous onComplete() function below. 
-            var that = this
-            gsap.to( this.mesh.position, {
+            //  each 1 distance per cubie will take 1 second 
+            const duration = (this.radius - radius).abs().scale(0, this.size, 0, GSAP_SEC)
+            gsap.to(this.mesh.position, {
                 duration,
                 ease: "quart.out",
                 x: this.address.x * ( this.size + radius ),
                 y: this.address.y * ( this.size + radius ),
                 z: this.address.z * ( this.size + radius ),
-                onComplete: function() {
-                    that.radius = radius
+                onComplete: () => {
+                    this.radius = radius
                     if( onComplete instanceof Function ) onComplete()
                 }
             })
@@ -223,6 +217,7 @@ export class Cubelet {
 			rotationUpperCase = rotation.toUpperCase(),
 			threshold = 0.001
 
+            const toDegreScale = (degrees > 90) ? 180 : 90
 
 			//  We need to signal to the world that we cannot accept more rotation() commands.
 			//  This will also cause all Groups (and Slices) containing this Cubelet
@@ -259,10 +254,9 @@ export class Cubelet {
 			//  Our Cube's twistDuration is the amount of time (in miliseconds)
 			//  that it should take to rotate 90 dgrees.
 			//  We're going to scale that to match whatever number of degrees we're actually rotating:
-			const SECOND = 1
-			let 
-			twistDuration = this.cube !== undefined ? this.cube.twistDuration : SECOND,
-			twistDurationScaled = Math.max.apply(null, [degrees.abs().scale( 0, 90, 0, twistDuration ), 0.05])
+			let
+			twistDuration = this.cube !== undefined ? (toDegreScale == 90 ? this.cube.twistDuration : this.cube.doubleTwistDuration) : GSAP_SEC,
+			twistDurationScaled = Math.max(degrees.abs().scale(0, toDegreScale, 0, twistDuration), 0.1)
 
 			//  And now for the rotation tween itself...
 			//  It feels very wrong to me that we're going to invert the coordinate space here

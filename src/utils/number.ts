@@ -6,6 +6,9 @@ declare global {
         roundDown(): number;
         roundUp(): number;
         abs(): number;
+        /**
+         * Scales this number from range [a0, a1] to range [b0, b1]
+         */
         scale(a0: number, a1: number, b0: number, b1: number): number;
         normalize(a: number, b: number): number;
         round(decimals?: number): number;
