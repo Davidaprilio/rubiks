@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -13,12 +15,13 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
+body, html, :root {
   box-sizing: border-box;
   padding: 0;
   margin: 0;
 }
-#app, #app > canvas, #app > div {
+
+#app, #app > canvas {
   width: 100vw;
   height: 100vh;
   display: block;

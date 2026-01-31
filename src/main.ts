@@ -93,3 +93,27 @@ declare global {
         cube: Cube;
     }
 }
+
+
+const notation = ["U", "D", "L", "R", "F", "B",
+                  "U'", "D'", "L'", "R'", "F'", "B'",
+                  "U2", "D2", "L2", "R2", "F2", "B2"];
+
+const templateEl = {
+  notation: document.querySelector<HTMLTemplateElement>('#notation-option'),
+}
+const panelEl = {
+  notation: document.querySelector<HTMLDivElement>('#notation'),
+}
+
+for (const char of notation) {
+  const btn = templateEl.notation?.content.cloneNode(true).childNodes[1]
+  if (btn) {
+    btn.textContent = char;
+    btn.addEventListener('click', async () => {
+      await window.cube.runNotation(char);
+    });
+    panelEl.notation?.appendChild(btn);
+  }
+}
+

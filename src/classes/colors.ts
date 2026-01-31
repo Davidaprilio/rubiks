@@ -5,7 +5,6 @@ export interface CubeColor {
     initial: string,
     hex: string,
     font: string,
-    bg: string,
 }
 
 //  Global constants to describe sticker colors.
@@ -19,49 +18,42 @@ export const colors: { [key in ColorKey]: CubeColor } = {
         initial: 'W',
         hex: '#FFFFFF',
         font: '#888888',
-        bg: 'background-color: #F3F3F3; color: rgba( 0, 0, 0, 0.5 )'
     },
     ORANGE: {
         name: 'orange',
         initial: 'O',
         hex: '#ff6600',
         font: '#ff6600',
-        bg: 'background-color: #ff6600; color: rgba( 255, 255, 255, 0.9 )'
     },
     BLUE: {
         name: 'blue',
         initial: 'B',
         hex: '#0000dd',
         font: '#0000dd',
-        bg: 'background-color: #0000dd; color: rgba( 255, 255, 255, 0.9 )'
     },
     RED: {
         name: 'red',
         initial: 'R',
         hex: '#ff0000',
         font: '#ff0000',
-        bg: 'background-color: #ff0000; color: rgba( 255, 255, 255, 0.9 )'
     },
     GREEN: {
         name: 'green',
         initial: 'G',
         hex: '#00aa00',
         font: '#00aa00',
-        bg: 'background-color: #00aa00; color: rgba( 255, 255, 255, 0.9 )'
     },
     YELLOW: {
         name: 'yellow',
         initial: 'Y',
         hex: '#ffee00',
         font: '#ffee00',
-        bg: 'background-color: #ffee00; color: rgba( 0, 0, 0, 0.5 )'
     },
     COLORLESS: {
         name: 'NA',
         initial: 'X',
         hex: '#454545',
         font: 'color: #EEEEEE',
-        bg: 'color: #dddddd'
     }
 };
 

@@ -28,7 +28,7 @@
 
 
 import * as THREE from 'three';
-import { colors, cubieFaceCfg, type FaceConfigKey } from './colors';
+import { colors, cubieFaceCfg, type CubeColor, type FaceConfigKey } from './colors';
 import { Text } from "troika-three-text";
 import type { Cube } from './cube';
 import { gsap } from "gsap";
@@ -38,7 +38,7 @@ const boxGeometry = new THREE.BoxGeometry();
 
 interface CubeletSticker {
     id: number;
-    color: string;
+    color: CubeColor;
     mesh: THREE.Mesh;
 }
 
@@ -113,7 +113,8 @@ export class Cubelet {
         for (let i = 0; i < 6; i++) {
             const pos = indexFaceMap[i]
             const cfgPos = cubieFaceCfg[pos as keyof typeof cubieFaceCfg];
-            const color = faceColor[i] ? `#${cfgPos.color.getHexString()}` : colors.COLORLESS.hex;
+            const colorSet = faceColor[i] ? cfgPos.colorSet : colors.COLORLESS;
+            const color = colorSet.hex;
 			if (faceColor[i]) {
 				totalColoredFaces++;
 			}
@@ -150,7 +151,8 @@ export class Cubelet {
             stickerText.sync();
             this.stickerTexts.push(stickerText);
 
-            this.stickers.push({color,
+            this.stickers.push({
+                color: colorSet,
                 id: i,
                 mesh: planeMesh
             });
@@ -311,6 +313,44 @@ export class Cubelet {
 					this.isTweening = false
 				}
 			})
+    }
+
+    //  Does this Cubelet contain a certain color?
+    //  If so, return a String decribing what face that color is on.
+    //  Otherwise return false.
+    hasColor(color: string | CubeColor): 'up' | 'down' | 'left' | 'right' | 'front' | 'back' | false {
+        let i, face
+        if (typeof color === 'object') {
+            color = color.initial;
+        }
+
+        for( i = 0; i < 6; i ++ ){
+            if(this.stickers[i].color.initial === color.toUpperCase() || this.stickers[i].color.name === color){
+                face = i
+                break
+            }
+        }
+
+        if( face !== undefined ){
+            return [
+                'front',
+                'up',
+                'right',
+                'down',
+                'left',
+                'back'
+            ][face] as 'up' | 'down' | 'left' | 'right' | 'front' | 'back'
+        }
+        else return false
+    }
+
+    // if 
+    hasColors(...colors: (string | CubeColor)[]): boolean {
+        let result  = true
+        colors.forEach((color) => {
+            result = result && !!this.hasColor(color)
+        })
+        return result
     }
 }
 

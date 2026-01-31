@@ -2,11 +2,14 @@ import { Cubelet } from "./cubelet";
 import * as THREE from "three";
 import { Group } from "./group";
 import { Slice } from "./slice";
+import { Faces } from "./face";
+import type { CubeColor } from "./colors";
 
 export class Cube {
     public size = 3;
     public cubelets: Cubelet[] = [];
-    readonly threeObj: THREE.Object3D;
+    public cubeletsMapId: { [id: number]: number } = {}; // id to index map
+    readonly threeObj: THREE.Object3D = new THREE.Object3D();
     public twistDuration: number = .5; // in seconds
     public doubleTwistDuration: number = .8; // in seconds
     public groups = {
@@ -27,13 +30,13 @@ export class Cube {
         standing: new Slice('standing'),
         back: new Slice('back'),
     }
+    
+    public faces = new Faces(this);
 
     constructor() {
         // const domEl = document.createElement( 'div' )
         // domEl.classList.add( 'cube' )
         // this.threeObj = new CSS3DObject(domEl);
-
-        this.threeObj = new THREE.Object3D();
         this.threeObj.name = 'cube';
         this.makeCubelet();
     }
@@ -58,6 +61,11 @@ export class Cube {
         })
 
         this.map();
+
+        for (const key in this.faces) {
+            const face = this.faces[key as keyof typeof this.faces];
+            
+        }
     }
 
     map() {
@@ -88,6 +96,25 @@ export class Cube {
         this.side.front.replace(...this.getIndexRange('z', 0).map(i => this.cubelets[i]))
         this.side.standing.replace(...this.getIndexRange('z', 1).map(i => this.cubelets[i]))
         this.side.back.replace(...this.getIndexRange('z', 2).map(i => this.cubelets[i]))
+
+        this.faces.up.replace(...this.side.up.cubelets);
+        this.faces.down.replace(...this.side.down.cubelets);
+        this.faces.left.replace(...this.side.left.cubelets);
+        this.faces.right.replace(...this.side.right.cubelets);
+        this.faces.front.replace(...this.side.front.cubelets);
+        this.faces.back.replace(...this.side.back.cubelets);
+
+        this.cubelets.forEach((cubelet, index) => {
+            this.cubeletsMapId[cubelet.id] = index;
+        });
+    }
+
+    getCubelet(id: number): Cubelet | null {
+        const index = this.cubeletsMapId[id];
+        if (index !== undefined) {
+            return this.cubelets[index];
+        }
+        return null;
     }
 
     async runNotation(sequence: string, onComplete?: ((cubelets: Cubelet[]) => void)) {
@@ -554,6 +581,23 @@ export class Cube {
         this.cubelets.forEach(cubelet => {
             cubelet.setRadius(radius, onComplete)
         })
+    }
+
+    hasColor(color: string|CubeColor) {
+        let results = new Group()
+        this.cubelets.forEach((cubelet) => {
+            if(cubelet.hasColor( color )) results.add(cubelet);
+        })
+        return results
+    }
+
+    //  this function implies AND rather than OR, XOR, etc.
+    hasColors(...colors: (string|CubeColor)[]) {
+        let results = new Group();
+        this.cubelets.forEach((cubelet) => {
+            if(cubelet.hasColors(...colors)) results.add(cubelet);
+        })
+        return results;
     }
 }
 
