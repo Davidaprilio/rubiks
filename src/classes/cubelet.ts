@@ -40,6 +40,7 @@ interface CubeletSticker {
     id: number;
     color: CubeColor;
     mesh: THREE.Mesh;
+    text: Text;
 }
 
 // many stickers on one cubelet mean it's an edge or corner piece
@@ -128,6 +129,7 @@ export class Cubelet {
             planeMesh.scale.setScalar(0.90);
             planeMesh.position.set(...cfgPos.position).multiplyScalar(size * .501);
             this.mesh.add(planeMesh);
+            this.mesh.userData.color = color;
 
             const textFace = new Text()
             textFace.text = i.toString();
@@ -154,7 +156,8 @@ export class Cubelet {
             this.stickers.push({
                 color: colorSet,
                 id: i,
-                mesh: planeMesh
+                mesh: planeMesh,
+                text: stickerText,
             });
         }
 		this.type = CubeletType[totalColoredFaces];
@@ -352,6 +355,66 @@ export class Cubelet {
         })
         return result
     }
+
+    async setOpacity(opacity: number, duration: number = 0.3) {
+        const m = this.mesh.material as THREE.MeshPhongMaterial
+        const  transparency = opacity < 1 ? true : false
+        m.transparent = transparency
+
+        const updateSticker = () => {
+            this.stickers.forEach((sticker) => {
+                const sm = sticker.mesh.material as THREE.MeshPhongMaterial
+                sm.opacity = m.opacity
+                sm.transparent = transparency
+                sm.needsUpdate = true
+                sticker.text.fillOpacity = m.opacity
+                sticker.text.sync()
+            });
+        }
+
+        if (duration === 0) {
+            m.opacity = opacity
+            m.needsUpdate = true
+            updateSticker()
+            return;
+        }
+
+        return new Promise<void>((resolve) => {
+            gsap.to(m, {
+                duration: duration,
+                ease: "power2.out",
+                opacity: opacity,
+                needsUpdate: true,
+                onUpdate: () => {
+                    updateSticker()
+                },
+                onComplete: () => { resolve(); }
+            });
+        });
+    }
+
+    async highlight(on: boolean, duration: number = 0.3) : Promise<void> {
+        const m = this.mesh.material as THREE.MeshPhongMaterial
+        const intensity = 0.7
+        m.emissiveIntensity = on ? 0 : intensity
+        m.color = new THREE.Color( on ? 0xacff1c : colors.COLORLESS.hex )
+        // make glow effect by increasing emissive color
+        m.emissive = new THREE.Color( on ? 0x55ff00 : 0x000000 )
+        if (duration === 0) {
+            m.emissiveIntensity = on ? intensity : 0
+            m.needsUpdate = true
+            return;
+        };
+        return new Promise<void>((resolve) => {
+            gsap.to(this.mesh.material, {
+                duration: duration,
+                emissiveIntensity: on ? intensity : 0,
+                needsUpdate: true,
+                ease: "power2.inOut",
+                onComplete: () => { resolve(); }
+            });
+        });
+    }
 }
 
 export abstract class CubeletAction {
@@ -383,6 +446,18 @@ export abstract class CubeletAction {
                     resolve(cubelet);                    
                 })
             })
+        })
+    }
+
+    async setOpacity(opacity: number = 1) {
+        return Promise.all(this.cubelets.map((cubelet) => {
+            return cubelet.setOpacity(opacity)
+        }))
+    }
+
+    async highlight(on: boolean, duration: number = 0.3) {
+        return this.applyToCubelets((cubelet) => {
+            return cubelet.highlight(on, duration)
         })
     }
 }
