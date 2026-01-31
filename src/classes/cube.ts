@@ -12,6 +12,7 @@ export class Cube {
     readonly threeObj: THREE.Object3D = new THREE.Object3D();
     public twistDuration: number = .5; // in seconds
     public doubleTwistDuration: number = .8; // in seconds
+    private queueTwist: TwistNotation[] = [];
     public groups = {
         core: new Group(),
         centers: new Group(),
@@ -117,17 +118,27 @@ export class Cube {
         return null;
     }
 
-    async runNotation(sequence: string, onComplete?: ((cubelets: Cubelet[]) => void)) {
-        const moves = sequence.trim().split('')
-        for (let i = 0; i < moves.length; i++) {
-            let move = moves[i]
-            const nextMove = moves[i + 1]
-            if (nextMove === "'" || nextMove === "2") {
-                move += nextMove
-                i++;
+    async runNotation(sequence: string|TwistNotation[], onComplete?: ((cubelets: Cubelet[]) => void)) {
+        const emptyQueue = this.queueTwist.length === 0;
+        if (typeof sequence === 'string') {
+            const moves = sequence.trim().split('')
+            for (let i = 0; i < moves.length; i++) {
+                let move = moves[i]
+                const nextMove = moves[i + 1]
+                if (nextMove === "'" || nextMove === "2") {
+                    move += nextMove
+                    i++;
+                }
+                this.queueTwist.push(move as TwistNotation);
             }
-            console.log(move);
-            await this.twist(move as TwistNotation)
+        } else {
+            this.queueTwist.push(...sequence);
+        }
+        if (!emptyQueue) {
+            return;
+        }
+        while (this.queueTwist.length > 0) {
+            await this.twist(this.queueTwist.shift() as TwistNotation)
         }
         if (onComplete) onComplete(this.cubelets)
     }
@@ -536,6 +547,38 @@ export class Cube {
             return;
         }
         this.map()
+    }
+
+    async scrumble(moves: number = 20, durationPerMoveSec: number = 0.1) {
+        const safeTwistDurations = this.twistDuration
+        const safeDoubleTwistDurations = this.doubleTwistDuration
+        this.twistDuration = durationPerMoveSec
+        this.doubleTwistDuration = durationPerMoveSec * 0.8
+        let prev = ''
+        const notations: TwistNotation[] = [
+            'U', "U'", 'U2',
+            'D', "D'", 'D2',
+            'L', "L'", 'L2',
+            'R', "R'", 'R2',
+            'F', "F'", 'F2',
+            'B', "B'", 'B2',
+        ];
+        let arr: TwistNotation[] = [];
+        for (let i = 0; i < moves; i++) {
+            const randIndex = Math.floor(Math.random() * notations.length);
+            const notation = notations[randIndex];
+            // avoid repeating the same move
+            if (prev.includes(notation[0])) {
+                i--;
+                continue;
+            }
+            arr.push(notation);
+            prev = notation;
+        }
+        const res = await this.runNotation(arr);
+        this.twistDuration = safeTwistDurations
+        this.doubleTwistDuration = safeDoubleTwistDurations
+        return res;
     }
 
     /**
