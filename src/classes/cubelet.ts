@@ -64,7 +64,7 @@ export class Cubelet {
     public address = { x: 0, y: 0, z: 0 };
     private radius: number = 0;
 	public type: CubeletTypeKey = 'core';
-	
+
 	//  We need to know if we're "engaged" on an axis 
 	//  which at first seems indentical to isTweening,
 	//  until you consider partial rotations. 
@@ -127,7 +127,18 @@ export class Cubelet {
     get down(): CubeletSticker {
         return this.stickers[3];
     }
-    
+
+    get side() {
+        const side: FaceConfigKey[] = [];
+        if (this.up.color.initial !== 'X') side.push('UP')
+        if (this.down.color.initial !== 'X') side.push('DOWN')
+        if (this.left.color.initial !== 'X') side.push('LEFT')
+        if (this.right.color.initial !== 'X') side.push('RIGHT')
+        if (this.front.color.initial !== 'X') side.push('FRONT')
+        if (this.back.color.initial !== 'X') side.push('BACK')
+        return side;
+    }
+
     get colors (): (CubeColor['initial'])[] {
         return this.getColors();
     }
@@ -199,7 +210,7 @@ export class Cubelet {
     }
 
     public map() {
-        this.setAddress(this.id);        
+        this.setAddress(this.id);
     }
 
     private setAddress(address: number){
@@ -381,6 +392,7 @@ export class Cubelet {
 
 					//  Phew! Now we can turn off the tweening flag.
 					this.isTweening = false
+                    this.map()
 				}
 			})
     }

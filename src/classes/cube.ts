@@ -635,7 +635,7 @@ export class Cube {
     }
 }
 
-type TwistNotation = 'U' | 'D' | 'L' | 'R' | 'F' | 'B' |
+export type TwistNotation = 'U' | 'D' | 'L' | 'R' | 'F' | 'B' |
     'u' | 'd' | 'l' | 'r' | 'f' | 'b' |
     "u'" | "d'" | "l'" | "r'" | "f'" | "b'" |
     "U'" | "D'" | "L'" | "R'" | "F'" | "B'" |

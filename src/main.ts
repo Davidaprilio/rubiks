@@ -4,6 +4,8 @@ import * as THREE from 'three'
 import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 import { Cube } from './classes/cube';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
+import { CFOP } from './classes/solvers/cfop';
+import { sleep } from './utils/utils';
 
 function setupThree() {
   //  First let's create a Scene object.
@@ -48,7 +50,7 @@ function resizeRendererToDisplaySize(renderer: THREE.WebGLRenderer) {
     return needResize;
 }
 
-function main() {
+async function main() {
   const { scene, camera, renderer } = setupThree()
 
   const stats = new Stats();
@@ -83,6 +85,12 @@ function main() {
     renderer.render(scene, camera);
   }
   renderer.setAnimationLoop(animate);
+
+  await sleep(1_000)
+
+  await c.scrumble(10, 0.3)
+  const solver = new CFOP(c)
+  window.solver = solver
 }
 
 
@@ -91,6 +99,7 @@ main()
 declare global {
     interface Window {
         cube: Cube;
+        solver: any;
     }
 }
 
