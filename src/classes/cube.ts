@@ -70,21 +70,12 @@ export class Cube {
     }
 
     map() {
-        this.cubelets.forEach(cubelet => {
-            switch (cubelet.type) {
-                case 'center':
-                    this.groups.centers.add(cubelet);
-                    this.groups.crosses.add(cubelet);
-                    break;
-                case 'edge':
-                    this.groups.edges.add(cubelet);
-                    this.groups.crosses.add(cubelet);
-                    break;
-                case 'corner': this.groups.corners.add(cubelet); break
-                case 'core': this.groups.core.add(cubelet); break
-            }
-        })
-
+        const cubelets = new Group();
+        cubelets.add(this.cubelets);
+        this.groups.centers = cubelets.hasType('center');
+        this.groups.edges = cubelets.hasType('edge');
+        this.groups.corners = cubelets.hasType('corner');
+        this.groups.crosses.replace(...this.groups.centers.cubelets, ...this.groups.edges.cubelets);
 
         this.side.up.replace(...this.getIndexRange('y', 0).map(i => this.cubelets[i]))
         this.side.equator.replace(...this.getIndexRange('y', 1).map(i => this.cubelets[i]))

@@ -109,6 +109,39 @@ export class Cubelet {
         this.mesh.position.set( x, y, z )
     }
 
+    get up(): CubeletSticker {
+        return this.stickers[1];
+    }
+    get front(): CubeletSticker {
+        return this.stickers[0];
+    }
+    get right(): CubeletSticker {
+        return this.stickers[2];
+    }
+    get left(): CubeletSticker {
+        return this.stickers[4];
+    }
+    get back(): CubeletSticker {
+        return this.stickers[5];
+    }
+    get down(): CubeletSticker {
+        return this.stickers[3];
+    }
+    
+    get colors (): (CubeColor['initial'])[] {
+        return this.getColors();
+    }
+
+    getColors (side: FaceConfigKey): (CubeColor['initial'])
+    getColors (): (CubeColor['initial'])[]
+    getColors (side?: FaceConfigKey): (CubeColor['initial'])[] | CubeColor['initial'] {
+        if (side) {
+            side = side.toLowerCase() as FaceConfigKey
+            return (this[side as keyof Cubelet] as CubeletSticker).color.initial
+        }
+        return this.stickers.map(sticker => sticker.color.initial);
+    }
+
     private coloring(faceColor: number[], size = 1) {
         const planeGeometry = new THREE.PlaneGeometry(size, size);
         const indexFaceMap: (FaceConfigKey)[] = ['FRONT', 'UP', 'RIGHT', 'DOWN', 'LEFT', 'BACK'];
@@ -163,6 +196,10 @@ export class Cubelet {
             });
         }
 		this.type = CubeletType[totalColoredFaces];
+    }
+
+    public map() {
+        this.setAddress(this.id);        
     }
 
     private setAddress(address: number){
@@ -293,12 +330,31 @@ export class Cubelet {
                     zRemaps = this.z.divide(90).round().subtract(this.zPrevious.divide(90).round()).abs()
                     const remaps = { x: xRemaps, y: yRemaps, z: zRemaps }
 
+                    
+                    if(xRemaps) {
+                        // remaps sticker by movement on X axis
+                        while(xRemaps--){
+                            if( this.x < this.xPrevious ) this.stickers = [ this.up, this.back, this.right, this.front, this.left, this.down ]
+                            else this.stickers = [ this.down, this.front, this.right, this.back, this.left, this.up ]
+                            this.map()
+                        }
+                        this.xPrevious = this.x
+                    }
 					if(this.x.modulo( 90 ).abs() < threshold ) {
 						this.x = 0
 						this.xPrevious = this.x
 						this.isEngagedX = false
 					}
 
+                    if(yRemaps){
+                        // remaps sticker by movement on Y axis
+                        while(yRemaps--) {
+                            if( this.y < this.yPrevious ) this.stickers = [ this.left, this.up, this.front, this.down, this.back, this.right ]
+                            else this.stickers = [ this.right, this.up, this.back, this.down, this.front, this.left ]
+                            this.map()
+                        }
+                        this.yPrevious = this.y
+                    }
 					if(this.y.modulo( 90 ).abs() < threshold) {
 						this.y = 0
 						this.yPrevious = this.y
@@ -306,6 +362,15 @@ export class Cubelet {
 					}
 
 		
+                    if(zRemaps) {
+                        // remaps sticker by movement on Z axis	
+                        while(zRemaps--) {
+                            if( this.z < this.zPrevious ) this.stickers = [ this.front, this.right, this.down, this.left, this.up, this.back ]
+                            else this.stickers = [ this.front, this.left, this.up, this.right, this.down, this.back ]
+                            this.map()
+                        }
+                        this.zPrevious = this.z
+                    }
 					if(this.z.modulo( 90 ).abs() < threshold) {
 						this.z = 0
 						this.zPrevious = this.z

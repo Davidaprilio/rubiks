@@ -30,6 +30,6 @@ export class Slice extends Group {
         this.centers = this.hasType('center');
         this.edges = this.hasType('edge');
         this.corners = this.hasType('corner');
-        this.crosses.replace(...this.edges.cubelets, ...this.corners.cubelets);
+        this.crosses.replace(...this.centers.cubelets, ...this.edges.cubelets);
     }
 }
