@@ -40,7 +40,8 @@ interface CubeletSticker {
     id: number;
     color: CubeColor;
     mesh: THREE.Mesh;
-    text: Text;
+    text?: Text;
+    indexText: Text;
 }
 
 // many stickers on one cubelet mean it's an edge or corner piece
@@ -85,7 +86,7 @@ export class Cubelet {
 	private z: number = 0
 	private zPrevious: number = 0
 
-    public stickerTextVisible: boolean = true;
+    public stickerTextVisible: boolean = false;
     public stickerTexts: Text[] = [];
 
     constructor(cube?: Cube, id: number = 0, faceColor: number[] = []) {
@@ -177,33 +178,38 @@ export class Cubelet {
             this.mesh.add(planeMesh);
             this.mesh.userData.color = color;
 
-            const textFace = new Text()
-            textFace.text = i.toString();
-            textFace.fontSize = 0.1;
-            textFace.color = 'white';
-            textFace.anchorX = 'center';
-            textFace.anchorY = 'middle';
-            this.mesh.add(textFace);
-            textFace.position.set(...cfgPos.position.map(v => -v) as [number, number, number]).multiplyScalar(size * .55);
-            textFace.sync();
+            const indexText = new Text()
+            indexText.text = i.toString();
+            indexText.visible = false;
+            indexText.fontSize = 0.1;
+            indexText.color = 'white';
+            indexText.anchorX = 'center';
+            indexText.anchorY = 'middle';
+            this.mesh.add(indexText);
+            indexText.position.set(...cfgPos.position.map(v => -v) as [number, number, number]).multiplyScalar(size * .55);
+            indexText.sync();
 
-            const stickerText = new Text()
-            stickerText.text = this.id.toString();
-            stickerText.fontSize = 0.3;
-            stickerText.color = cfgPos.colorSet.font;
-            stickerText.anchorX = 'center';
-            stickerText.anchorY = 'middle';
-            planeMesh.add(stickerText);
-            stickerText.position.set(0, 0, 0.01); // buat teksnya sedikit menjauh dari permukaan stiker
-            stickerText.visible = this.stickerTextVisible
-            stickerText.sync();
-            this.stickerTexts.push(stickerText);
+            let stickerText: Text | undefined = undefined;
+            if (colors.COLORLESS.initial !== colorSet.initial) {
+                stickerText = new Text()
+                stickerText.text = this.id.toString();
+                stickerText.fontSize = 0.3;
+                stickerText.color = cfgPos.colorSet.font;
+                stickerText.anchorX = 'center';
+                stickerText.anchorY = 'middle';
+                planeMesh.add(stickerText);
+                stickerText.position.set(0, 0, 0.01); // buat teksnya sedikit menjauh dari permukaan stiker
+                stickerText.visible = this.stickerTextVisible
+                stickerText.sync();
+                this.stickerTexts.push(stickerText);
+            }
 
             this.stickers.push({
                 color: colorSet,
                 id: i,
                 mesh: planeMesh,
                 text: stickerText,
+                indexText: indexText
             });
         }
 		this.type = CubeletType[totalColoredFaces];
@@ -221,11 +227,17 @@ export class Cubelet {
 
     public showStickerText(visible: boolean) {
         this.stickerTextVisible = visible;
-        console.log('render text', this.stickerTextVisible);
         this.stickerTexts.forEach( text => {
             text.visible = this.stickerTextVisible;
             text.sync();
         });
+    }
+
+    public showStickerIndexes(show: boolean = true) {
+        this.stickers.forEach(sticker => {
+            sticker.indexText.visible = show;
+            sticker.indexText.sync();
+        })
     }
 
 
@@ -446,8 +458,11 @@ export class Cubelet {
                 sm.opacity = m.opacity
                 sm.transparent = transparency
                 sm.needsUpdate = true
-                sticker.text.fillOpacity = m.opacity
-                sticker.text.sync()
+                if (sticker.text) {
+                    sticker.text.opacity = m.opacity
+                    sticker.text.fillOpacity = m.opacity
+                    sticker.text.sync()
+                }
             });
         }
 

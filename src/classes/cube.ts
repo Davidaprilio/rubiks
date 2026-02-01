@@ -633,6 +633,18 @@ export class Cube {
         })
         return results;
     }
+
+    showStickerIndexes(show: boolean = true) {
+        this.cubelets.forEach(cubelet => {
+            cubelet.showStickerIndexes(show);
+        });
+    }
+
+    showStickerLabel(show: boolean = true) {
+        this.cubelets.forEach(cubelet => {
+            cubelet.showStickerText(show);
+        });
+    }
 }
 
 export type TwistNotation = 'U' | 'D' | 'L' | 'R' | 'F' | 'B' |

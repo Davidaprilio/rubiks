@@ -86,6 +86,7 @@ async function main() {
   }
   renderer.setAnimationLoop(animate);
 
+  c.showStickerLabel(true)
   await sleep(1_000)
 
   await c.scrumble(10, 0.3)
