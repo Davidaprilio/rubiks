@@ -52,6 +52,8 @@ const CubeletType: CubeletTypeKey[] = [
 	'corner',
 ]
 
+export type CubeletPropertyKey = keyof Cubelet
+
 export class Cubelet {
     readonly id: number;
 	public obj: THREE.Object3D;
