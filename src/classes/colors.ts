@@ -103,14 +103,14 @@ export const cubieFaceCfg: { [key in FaceConfigKey]: FaceConfig } = {
     LEFT: {
         up: [0, 1, 0],
         position: [- 1, 0, 0],
-        color: new THREE.Color(colors.GREEN.hex),
-        colorSet: colors.GREEN
+        color: new THREE.Color(colors.BLUE.hex),
+        colorSet: colors.BLUE
     },
     RIGHT: {
         up: [0, - 1, 0],
         position: [1, 0, 0],
-        color: new THREE.Color(colors.BLUE.hex),
-        colorSet: colors.BLUE
+        color: new THREE.Color(colors.GREEN.hex),
+        colorSet: colors.GREEN
     },
     DOWN: {
         up: [0, 0, - 1],
