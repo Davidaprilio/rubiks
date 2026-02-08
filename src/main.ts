@@ -7,6 +7,8 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { CFOP } from './classes/solvers/cfop';
 import { sleep } from './utils/utils';
 
+const isDev = import.meta.env.DEV;
+
 function setupThree() {
   //  First let's create a Scene object.
 	const scene = new THREE.Scene()
@@ -52,16 +54,24 @@ function resizeRendererToDisplaySize(renderer: THREE.WebGLRenderer) {
 
 async function main() {
   const { scene, camera, renderer } = setupThree()
+  
+  let animateDev = () => {} 
 
-  const stats = new Stats();
-  document.body.appendChild( stats.dom );
+  if (isDev) {
+    const stats = new Stats();
+    document.body.appendChild( stats.dom );
 
+    animateDev = () => {
+      stats.update();
+    }
+
+    const axesHelper = new THREE.AxesHelper(8);
+    scene.add( axesHelper );
+  }
 
   const trackballControl = new TrackballControls( camera, renderer.domElement );
   trackballControl.rotateSpeed = 5;
 
-  const axesHelper = new THREE.AxesHelper(8);
-  scene.add( axesHelper );
 
   const c = new Cube()
   scene.add( c.threeObj )
@@ -72,9 +82,10 @@ async function main() {
   light.position.set( 0, 8, 1 )
   scene.add( light )
 
+
   // animation loop
   const animate: XRFrameRequestCallback = () => {
-    stats.update();
+    animateDev();
     if (resizeRendererToDisplaySize(renderer)) {
       const canvas = renderer.domElement;
       camera.aspect = canvas.clientWidth / canvas.clientHeight;
@@ -87,9 +98,22 @@ async function main() {
   renderer.setAnimationLoop(animate);
 
   c.showStickerLabel(true)
-  await sleep(1_000)
+  await sleep(3_000)
 
-  await c.scrumble(10, 0.3)
+  c.set([
+    "RYXXBX", "BYXXXX", "RYGXXX",
+    "RXXXBX", "RXXXXX", "RXGXXX",
+    "RXXWBX", "RXXWXX", "RXGWXX",
+
+    "XYXXGX", "XYXXXX", "XYRXXXX",
+    "XXXXBX", "XXXXXX", "XXGXXXX",
+    "XXXWBX", "XXXWXX", "XXGWXX",
+
+    "XYXXBO", "XYXXXO", "XYGXXO",
+    "XXXXBO", "XXXXXO", "XXGXXO",
+    "XXXWBO", "XXXWXO", "XXGWXO"])
+
+  // await c.scrumble(10, 0.3)
   const solver = new CFOP(c)
   window.solver = solver
 }

@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { Group } from "./group";
 import { Slice } from "./slice";
 import { Faces } from "./face";
-import type { CubeColor } from "./colors";
+import type { CubeColor, StickerColor } from "./colors";
 
 export class Cube {
     public size = 3;
@@ -42,23 +42,59 @@ export class Cube {
         this.makeCubelet();
     }
 
-    makeCubelet() {
-        const cube = this;
-        ([
-            //  Front slice
-            [1, 1, 0, 0, 1, 0], [1, 1, 0, 0, 0, 0], [1, 1, 1, 0, 0, 0],//   0,  1,  2
-            [1, 0, 0, 0, 1, 0], [1, 0, 0, 0, 0, 0], [1, 0, 1, 0, 0, 0],//   3,  4,  5
-            [1, 0, 0, 1, 1, 0], [1, 0, 0, 1, 0, 0], [1, 0, 1, 1, 0, 0],//   6,  7,  8
-            //  Standing slice
-            [0, 1, 0, 0, 1, 0], [0, 1, 0, 0, 0, 0], [0, 1, 1, 0, 0, 0],//   9, 10, 11
-            [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0],//  12, XX, 14
-            [0, 0, 0, 1, 1, 0], [0, 0, 0, 1, 0, 0], [0, 0, 1, 1, 0, 0],//  15, 16, 17
-            //  Back slice
-            [0, 1, 0, 0, 1, 1], [0, 1, 0, 0, 0, 1], [0, 1, 1, 0, 0, 1],//  18, 19, 20
-            [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 0, 1], [0, 0, 1, 0, 0, 1],//  21, 22, 23
-            [0, 0, 0, 1, 1, 1], [0, 0, 0, 1, 0, 1], [0, 0, 1, 1, 0, 1] //  24, 25, 26
-        ]).forEach(function (cubeletColorMap, cubeletId) {
-            cube.cubelets.push(new Cubelet(cube, cubeletId, cubeletColorMap))
+    /**
+     * 
+     * @param state cube state representation
+     * ex state: 
+     * RYXXBX = 0:F 1:U 2:R 3:D 4:L 5:B
+     * ["RYXXBX", "BYXXXX", "RYGXXX",
+     *  "RXXXBX", "RXXXXX", "RXGXXX",
+     *  "RXXXBX", "RXXWXX", "RXGWXX",
+     * 
+     *  "XYXXBX", "XYXXXX", "XYRXXXX",
+     *  "XXXXBX", "XXXXXX", "XXGXXXX",
+     *  "XXXWBX", "XXXWXX", "XXGWXX",
+     * 
+     *  "XYXXBO", "XYXXXO", "XYGXXO",
+     *  "XXXXBO", "XXXXXO", "XXGXXO",
+     *  "XXXWBO", "XXXWXO", "XXGWXO"]
+     */
+    set(state: string[]) {
+        const maps = state.map((cubeletState) => {
+            return cubeletState.split('') as StickerColor[];
+        })
+        this.removeCubelet();
+        this.makeCubelet(maps)
+    }
+
+    removeCubelet() {
+        for (let i = 0; i < this.cubelets.length; i++) {
+            const cubelet = this.cubelets[i];
+            cubelet.remove();
+            delete this.cubelets[i];
+        }
+        this.cubelets = [];
+    }
+
+    makeCubelet(state?: (StickerColor[]|number[])[]) {
+        if (!state) {
+            state = [
+                //  Front slice
+                [1, 1, 0, 0, 1, 0], [1, 1, 0, 0, 0, 0], [1, 1, 1, 0, 0, 0],//   0,  1,  2
+                [1, 0, 0, 0, 1, 0], [1, 0, 0, 0, 0, 0], [1, 0, 1, 0, 0, 0],//   3,  4,  5
+                [1, 0, 0, 1, 1, 0], [1, 0, 0, 1, 0, 0], [1, 0, 1, 1, 0, 0],//   6,  7,  8
+                //  Standing slice
+                [0, 1, 0, 0, 1, 0], [0, 1, 0, 0, 0, 0], [0, 1, 1, 0, 0, 0],//   9, 10, 11
+                [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0],//  12, XX, 14
+                [0, 0, 0, 1, 1, 0], [0, 0, 0, 1, 0, 0], [0, 0, 1, 1, 0, 0],//  15, 16, 17
+                //  Back slice
+                [0, 1, 0, 0, 1, 1], [0, 1, 0, 0, 0, 1], [0, 1, 1, 0, 0, 1],//  18, 19, 20
+                [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 0, 1], [0, 0, 1, 0, 0, 1],//  21, 22, 23
+                [0, 0, 0, 1, 1, 1], [0, 0, 0, 1, 0, 1], [0, 0, 1, 1, 0, 1] //  24, 25, 26
+            ];
+        }
+        state.forEach((cubeletColorMap, cubeletId) => {
+            this.cubelets.push(new Cubelet(this, cubeletId, cubeletColorMap))
         })
 
         this.map();

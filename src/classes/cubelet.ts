@@ -28,7 +28,7 @@
 
 
 import * as THREE from 'three';
-import { colors, cubieFaceCfg, type CubeColor, type FaceConfigKey } from './colors';
+import { colors, colorsKey, cubieFaceCfg, type CubeColor, type FaceConfigKey, type StickerColor } from './colors';
 import { Text } from "troika-three-text";
 import type { Cube } from './cube';
 import { gsap } from "gsap";
@@ -89,7 +89,7 @@ export class Cubelet {
     public stickerTextVisible: boolean = false;
     public stickerTexts: Text[] = [];
 
-    constructor(cube?: Cube, id: number = 0, faceColor: number[] = []) {
+    constructor(cube?: Cube, id: number = 0, faceColor: (number[]|StickerColor[]) = []) {
         this.id = id;
 		this.obj = new THREE.Object3D();
 		this.obj.name = `obj-cubelet-${this.id}`;
@@ -154,14 +154,18 @@ export class Cubelet {
         return this.stickers.map(sticker => sticker.color.initial);
     }
 
-    private coloring(faceColor: number[], size = 1) {
+    private coloring(faceColor: (number[]|StickerColor[]), size = 1) {
         const planeGeometry = new THREE.PlaneGeometry(size, size);
         const indexFaceMap: (FaceConfigKey)[] = ['FRONT', 'UP', 'RIGHT', 'DOWN', 'LEFT', 'BACK'];
 		let totalColoredFaces = 0;
+        const useKeyColor = (typeof faceColor[0] === 'number');
         for (let i = 0; i < 6; i++) {
             const pos = indexFaceMap[i]
             const cfgPos = cubieFaceCfg[pos as keyof typeof cubieFaceCfg];
-            const colorSet = faceColor[i] ? cfgPos.colorSet : colors.COLORLESS;
+            const colorSet = useKeyColor 
+                ? ( faceColor[i] ? cfgPos.colorSet : colors.COLORLESS )
+                : colorsKey[(faceColor as StickerColor[])[i]];
+            
             const color = colorSet.hex;
 			if (faceColor[i]) {
 				totalColoredFaces++;
@@ -213,6 +217,12 @@ export class Cubelet {
             });
         }
 		this.type = CubeletType[totalColoredFaces];
+    }
+
+    remove() {
+        if (this.cube) {
+            this.cube.threeObj.remove( this.obj );
+        }
     }
 
     public map() {
