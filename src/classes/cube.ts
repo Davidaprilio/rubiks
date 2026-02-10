@@ -67,6 +67,13 @@ export class Cube {
         this.makeCubelet(maps)
     }
 
+    get(index?: number): string[]
+    get(index: number): string
+    get(index?: number): string|string[] {
+        if (index !== undefined) return this.cubelets[index].colors.join('')
+        return this.cubelets.map(c => c.colors.join(''))
+    }
+
     removeCubelet() {
         for (let i = 0; i < this.cubelets.length; i++) {
             const cubelet = this.cubelets[i];

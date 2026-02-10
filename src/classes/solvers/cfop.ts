@@ -167,4 +167,52 @@ export class CFOP implements Solver {
     
     return mapFormula
   }
+
+  getOllKey(): string | false {
+    const mapSideToIndex = {
+      front: 0,
+      up: 1,
+      right: 2,
+      down: 3,
+      left: 4,
+      back: 5
+    } as const
+    const keys = this.cube.side.up.cubelets.sort((a, b) => b.id - a.id).reduce((pv, cv) => {
+      const side = cv.hasColor('Y')
+      if (side) pv[cv.id] = mapSideToIndex[side]
+      return pv
+    }, {} as Record<string, number>)
+    
+    const key = [
+      keys[18], keys[19], keys[20],
+      keys[9], keys[10], keys[11],
+      keys[0], keys[1], keys[2]
+    ].join('')
+
+    const replaceIndexOll: Record<string, number> = {0:3, 1:0, 5:1}
+    return key.replace(/[015]/g, c => replaceIndexOll[c]?.toString() || c)
+  }
+
+  setupOllCube(topFaceState: FaceState) {
+    topFaceState = topFaceState.map(s => s.toUpperCase()) as FaceState
+    const state = this.cube.get()
+    state[18] = `X${topFaceState[0][0]}XX${topFaceState[0][1]}${topFaceState[0][2]}`
+    state[19] = `X${topFaceState[1][0]}XXX${topFaceState[1][1]}`
+    state[20] = `X${topFaceState[2][0]}${topFaceState[2][1]}XX${topFaceState[2][2]}`
+    state[9] = `X${topFaceState[3][0]}XX${topFaceState[3][1]}X`
+    state[10] = "XYXXXX" // center
+    state[11] = `X${topFaceState[5][0]}${topFaceState[5][1]}XXX`
+    state[0] = `${topFaceState[6][0]}${topFaceState[6][1]}XX${topFaceState[6][2]}X`
+    state[1] = `${topFaceState[7][0]}${topFaceState[7][1]}XXXX`
+    state[2] = `${topFaceState[8][0]}${topFaceState[8][1]}${topFaceState[8][2]}XXX`
+    this.cube.set(state)
+    console.log(state);
+    
+  }
 }
+
+export type FaceState = [
+    string,string,string,
+    string,string,string,
+    string,string,string
+]

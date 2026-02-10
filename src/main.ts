@@ -100,21 +100,25 @@ async function main() {
   c.showStickerLabel(true)
   await sleep(3_000)
 
-  c.set([
-    "RYXXBX", "BYXXXX", "RYGXXX",
-    "RXXXBX", "RXXXXX", "RXGXXX",
-    "RXXWBX", "RXXWXX", "RXGWXX",
+  // c.set([
+  //   "RYXXBX", "BYXXXX", "RYGXXX",
+  //   "RXXXBX", "RXXXXX", "RXGXXX",
+  //   "RXXWBX", "RXXWXX", "RXGWXX",
 
-    "XYXXGX", "XYXXXX", "XYRXXXX",
-    "XXXXBX", "XXXXXX", "XXGXXXX",
-    "XXXWBX", "XXXWXX", "XXGWXX",
+  //   "XYXXGX", "XYXXXX", "XYRXXXX",
+  //   "XXXXBX", "XXXXXX", "XXGXXXX",
+  //   "XXXWBX", "XXXWXX", "XXGWXX",
 
-    "XYXXBO", "XYXXXO", "XYGXXO",
-    "XXXXBO", "XXXXXO", "XXGXXO",
-    "XXXWBO", "XXXWXO", "XXGWXO"])
+  //   "XYXXBO", "XYXXXO", "XYGXXO",
+  //   "XXXXBO", "XXXXXO", "XXGXXO",
+  //   "XXXWBO", "XXXWXO", "XXGWXO"])
 
   // await c.scrumble(10, 0.3)
   const solver = new CFOP(c)
+  solver.setupOllCube([
+      "BYR", "YG", "GOY",
+      "RY",  "Y",  "BY",
+      "BYO", "OY", "GRY"])
   window.solver = solver
 }
 

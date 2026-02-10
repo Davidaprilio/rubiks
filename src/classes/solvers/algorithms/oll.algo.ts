@@ -13,7 +13,7 @@
  * 4 = right face                 3
  * @ref https://cdn.shopify.com/s/files/1/0703/2389/6537/files/Frame_37784.png?v=1750150273
  */
-export const OllFormulas: Record<string, any> = {
+export const OllAlgorithms: Record<string, any> = {
     "412402432": { // GAN:01
         solve: ["(R U' U') (R2 F R F') U2 (R' F R F')"]
     },
