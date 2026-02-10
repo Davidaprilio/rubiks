@@ -197,15 +197,26 @@ export class CFOP implements Solver {
   setupOllCube(topFaceState: FaceState) {
     topFaceState = topFaceState.map(s => s.toUpperCase()) as FaceState
     const state = this.cube.get()
-    state[18] = `X${topFaceState[0][0]}XX${topFaceState[0][1]}${topFaceState[0][2]}`
-    state[19] = `X${topFaceState[1][0]}XXX${topFaceState[1][1]}`
-    state[20] = `X${topFaceState[2][0]}${topFaceState[2][1]}XX${topFaceState[2][2]}`
-    state[9] = `X${topFaceState[3][0]}XX${topFaceState[3][1]}X`
+    if (topFaceState[0].length === 6) {
+      state[18] = topFaceState[0]
+      state[19] = topFaceState[1]
+      state[20] = topFaceState[2]
+      state[9] = topFaceState[3]
+      state[11] = topFaceState[5]
+      state[0] = topFaceState[6]
+      state[1] = topFaceState[7]
+      state[2] = topFaceState[8]
+    } else {
+      state[18] = `X${topFaceState[0][0]}XX${topFaceState[0][1]}${topFaceState[0][2]}`
+      state[19] = `X${topFaceState[1][0]}XXX${topFaceState[1][1]}`
+      state[20] = `X${topFaceState[2][0]}${topFaceState[2][1]}XX${topFaceState[2][2]}`
+      state[9] = `X${topFaceState[3][0]}XX${topFaceState[3][1]}X`
+      state[11] = `X${topFaceState[5][0]}${topFaceState[5][1]}XXX`
+      state[0] = `${topFaceState[6][0]}${topFaceState[6][1]}XX${topFaceState[6][2]}X`
+      state[1] = `${topFaceState[7][0]}${topFaceState[7][1]}XXXX`
+      state[2] = `${topFaceState[8][0]}${topFaceState[8][1]}${topFaceState[8][2]}XXX`
+    }
     state[10] = "XYXXXX" // center
-    state[11] = `X${topFaceState[5][0]}${topFaceState[5][1]}XXX`
-    state[0] = `${topFaceState[6][0]}${topFaceState[6][1]}XX${topFaceState[6][2]}X`
-    state[1] = `${topFaceState[7][0]}${topFaceState[7][1]}XXXX`
-    state[2] = `${topFaceState[8][0]}${topFaceState[8][1]}${topFaceState[8][2]}XXX`
     this.cube.set(state)
   }
 
