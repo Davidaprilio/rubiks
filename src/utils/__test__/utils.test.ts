@@ -23,7 +23,6 @@ describe('utils module', () => {
     describe('fn ollKeyToStateFaceTop', () => {
         it('should return correct state for key 100000300', async () => {
             const state = ollKeyToStateFaceTop('100000300')
-            console.log(state);
 
             expect(state).toEqual([
                 "XXXXXY", "XYXXXX", "XYXXXX",

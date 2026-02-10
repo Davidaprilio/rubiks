@@ -48,8 +48,8 @@ export const OllAlgorithms: Record<string, {
     "411411332": { 
         tags: ["GAN:06"],
         solve: [
-            "(r U' U') (R' U' R U' r')", 
-            "y2 l U2 L' U' L U' l'"
+            "(r U2) (R' U' R U' r')", 
+            "y2 l U2 L' U' L U' l'",
         ]
     },
     "102002033": { 
@@ -72,11 +72,11 @@ export const OllAlgorithms: Record<string, {
     },
     "110002403": { 
         tags: ["GAN:10"],
-        solve: ["(R U R' U) (R' F R F') (R' U' R')"]
+        solve: ["(R U R' U) (R' F R F') (R U' U' R')"]
     },
     "112400003": { 
         tags: ["GAN:11"],
-        solve: ["(r' R2 U R' U) (R' U' R' U) M'"]
+        solve: ["(r' R2 U R' U) (R U2 R' U) M'"]
     },
     "001400332": { 
         tags: ["GAN:12"],
@@ -88,7 +88,7 @@ export const OllAlgorithms: Record<string, {
     },
     "411000330": { 
         tags: ["GAN:14"],
-        solve: ["(R' F) (R U R' F' R) (F' U' F')"]
+        solve: ["(R' F) (R U R' F' R) (F U' F')"]
     },
     "112000430": { 
         tags: ["GAN:15"],
@@ -100,15 +100,15 @@ export const OllAlgorithms: Record<string, {
     },
     "011402430": { 
         tags: ["GAN:17"],
-        solve: ["(R U R' U) (R' F R F') U2(R' F R F')"]
+        solve: ["(R U R' U) (R' F R F') U2 (R' F R F')"]
     },
     "010402333": { 
         tags: ["GAN:18"],
-        solve: ["(r U R' U) (R' U' U' r') (r' U2 r)"]
+        solve: ["(r U R' U) (R U2 r') (r' U' R U') (R' U2 r)"]
     },
     "010402432": { 
         tags: ["GAN:19"],
-        solve: ["(r' R U) (R U R' U' r) (R2' F R F')"]
+        solve: ["(r' R U) (R U R' U' r) (R2 F R F')"]
     },
     "010402030": { 
         tags: ["GAN:20"],
@@ -116,15 +116,15 @@ export const OllAlgorithms: Record<string, {
     },
     "101000303": { 
         tags: ["GAN:21"],
-        solve: ["(R U' U) (R' U' R U R' U') (R U' R')"]
+        solve: ["(R U' U') (R' U' R U R' U') (R U' R')"]
     },
     "401000403": { 
         tags: ["GAN:22"],
-        solve: ["(R U2' U') (R2' U') (R2 U') (U' R)"]
+        solve: ["(R U2) (R2 U') (R2 U') (R2 U') (U' R)"]
     },
     "101000000": { 
         tags: ["GAN:23"],
-        solve: ["(R2 D') (R U' U' R') (R' U R' U R)"]
+        solve: ["(R2 D') (R U' U' R' D) (R U' U' R)"]
     },
     "100000300": { 
         tags: ["GAN:24"],
@@ -163,12 +163,12 @@ export const OllAlgorithms: Record<string, {
     },
     "011002003": { 
         tags: ["GAN:31"],
-        solve: ["R' F R U R' f' R (r' U' r)"]
+        solve: ["R' F R U R' U' F2 U F R)"]
     },
     "110400300": { 
         tags: ["GAN:32"],
         solve: [
-            "(R U) (R' U') (R' U R B R')",
+            "(R U) (B' U') (R' U R B R')",
             "S (R U R' U') (R' F R f')"
         ]
     },
@@ -185,8 +185,8 @@ export const OllAlgorithms: Record<string, {
         solve: ["(R U' U') (R'2 F R F') (R U' U' R')"]
     },
     "012002300": { 
-        tags: ["GAN:36 x"],
-        solve: ["(R' U' R U') (R' U R U) (l U' R' U')"]
+        tags: ["GAN:36"],
+        solve: ["(R' U' R U') (R' U R U) (l U' R' U)"]
     },
     "002002330": { 
         tags: ["GAN:37"],
@@ -198,7 +198,7 @@ export const OllAlgorithms: Record<string, {
     },
     "410000033": { 
         tags: ["GAN:39"],
-        solve: ["(R U R' F' U') (R U2 R')"]
+        solve: ["(R U R' F' U' F) U (R U2 R')"]
     },
     "011000430": { 
         tags: ["GAN:40"],
@@ -214,7 +214,9 @@ export const OllAlgorithms: Record<string, {
     },
     "012002002": { 
         tags: ["GAN:43"],
-        solve: ["(B' U') (R' U R B) ⚌OR f' (L' U' L U) f"]
+        solve: [
+            "(B' U') (R' U R B)",
+            "f' (L' U' L U) f"]
     },
     "410400400": { 
         tags: ["GAN:44"],
@@ -230,15 +232,21 @@ export const OllAlgorithms: Record<string, {
     },
     "102400332": { 
         tags: ["GAN:47"],
-        solve: ["b' (U' r' U R)2 b ⚌OR F' (L' U' L U)2 F"]
+        solve: [
+            "b' (U' R' U R) (U' R' U R) b",
+            "F' (L' U' L U) (L' U' L U) F"
+        ]
     },
     "401002433": { 
         tags: ["GAN:48"],
-        solve: ["F (R U R' U')2 F'"]
+        solve: [
+            "F (R U R' U') (R U R' U') F'",
+            "F (R U R' U')2 F'"
+        ]
     },
     "112002302": { 
         tags: ["GAN:49"],
-        solve: ["(R B') (R2' F R2 B) (R2' F' R)"]
+        solve: ["(R B') (R2 F R2 B) (R2 F' R)"]
     },
     "411400403": { 
         tags: ["GAN:50"],
@@ -246,7 +254,7 @@ export const OllAlgorithms: Record<string, {
     },
     "411000433": { 
         tags: ["GAN:51"],
-        solve: ["f (R U R' U')2 f'"]
+        solve: ["f (R U R' U') (R U R' U') f'"]
     },
     "401402403": { 
         tags: ["GAN:52"],
@@ -254,11 +262,11 @@ export const OllAlgorithms: Record<string, {
     },
     "111002303": { 
         tags: ["GAN:53"],
-        solve: ["(r' U2) (R U R' U) (R U' R' U r)"]
+        solve: ["(r' U2) (R U R' U') (R U R' U r)"]
     },
     "101002333": { 
         tags: ["GAN:54"],
-        solve: ["(r U' U') (R' U' R U' R' U r')"]
+        solve: ["(r U' U') (R' U' R U) (R' U' R U' r')"]
     },
     "111000333": { 
         tags: ["GAN:55"],
@@ -267,7 +275,7 @@ export const OllAlgorithms: Record<string, {
     "412000432": { 
         tags: ["GAN:56"],
         solve: [
-            "(r U r') (U R U' R')2 (r U' r')",
+            "(r U r') (U R U' R') (U R U' R') (r U' r')",
             "(f R U R' U' F') (R U R' U') (R' F R f')"
         ]
     },
