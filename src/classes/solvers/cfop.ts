@@ -1,6 +1,7 @@
 import type { Cube, TwistNotation } from "@/classes/cube";
 import type { Solver } from "@/classes/solvers/solver";
 import type { Cubelet } from "@/classes/cubelet";
+import { OllAlgorithms } from "./algorithms/oll.algo";
 
 /**
  * This 3x3 Cube Solve
@@ -206,8 +207,39 @@ export class CFOP implements Solver {
     state[1] = `${topFaceState[7][0]}${topFaceState[7][1]}XXXX`
     state[2] = `${topFaceState[8][0]}${topFaceState[8][1]}${topFaceState[8][2]}XXX`
     this.cube.set(state)
-    console.log(state);
+  }
+
+  getOLLSolveAlgo() {
+    const key = this.getOllKey()
+    if (key === false) {
+      console.log('not valid OLL state');
+      return false
+    }
+    const algo = OllAlgorithms[key]
+    if (algo === undefined) {
+      console.log('OLL case not found for key', key);
+      return false
+    }
     
+    return algo.solve[0]
+      .replaceAll('(', '')
+      .replaceAll(')', '')
+      .replaceAll("'2", '2')
+      .split(' ')
+  }
+
+  async solveOLL() {
+    const algo = this.getOLLSolveAlgo()
+    if (algo === false) {
+      console.log('cannot solve OLL');
+      return
+    }
+
+    return this.cube.runNotation(algo as TwistNotation[])
+  }
+
+  isSolvedOLL(): boolean {
+    return this.cube.side.up.cubelets.every(cubelet => cubelet.hasColor('Y') == 'up')
   }
 }
 

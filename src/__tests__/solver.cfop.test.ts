@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, should } from 'vitest'
 import { Cube } from '@/classes/cube'
 import { CFOP } from '@/classes/solvers/cfop'
 import { OllAlgorithms } from '@/classes/solvers/algorithms/oll.algo'
@@ -52,5 +52,19 @@ describe('CFOP Solver', () => {
         expect(key.length).toBe(9)
         expect(key).toBe('102000003')
     })
+  })
+
+  describe('should can get correct OLL formula and solve it', () => {
+    for (const key in OllAlgorithms) {
+      const algo = OllAlgorithms[key]
+      if (algo.cube == undefined || algo.cube.length === 0) {
+        continue;
+      }
+      it(`should solve OLL case ${key} ${(algo.tags || []).join(', ')}`, async () => {
+        cfop.setupOllCube(algo.cube![0])
+        await cfop.solveOLL()
+        expect(cfop.isSolvedOLL()).toBe(true)
+      })
+    }
   })
 })
