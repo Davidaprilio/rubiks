@@ -215,3 +215,51 @@ function addItem(text: string) {
 
 window.removeItem = removeItem;
 window.addItem = addItem;
+
+
+// Keyboard controls
+// Use Alt + key for accented notation (e.g. U')
+// Use Shift or CapsLock for switching to upper or lower case notation
+// Use Ctrl for double step notation (e.g. U2)
+const notationKey = ['u', 'd', 'l', 'r', 'f', 'b', 'm', 'e', 's'];
+let accented = false;
+let doubleStep = false;
+window.addEventListener('keydown', (e) => {
+  e.preventDefault();
+  if (e.repeat) return
+  const n = e.key;
+  if (n === 'Alt') {
+    accented = true;
+    return;
+  }
+  if (n === 'Control') {
+    doubleStep = true;
+    return;
+  }
+
+  let char = ''
+  if (notationKey.includes(n.toLowerCase())) {
+    char = n;
+  }
+
+  if (char.length == 0) return;
+  if (accented) {
+    char += "'";
+  }
+  if (doubleStep) {
+    char += "2";
+  }
+
+  window.cube.runNotation(char);
+})
+window.addEventListener('keyup', (e) => {
+  const n = e.key;
+  if (n === 'Alt') {
+    accented = false;
+    return;
+  }
+  if (n === 'Control') {
+    doubleStep = false;
+    return;
+  }
+})
