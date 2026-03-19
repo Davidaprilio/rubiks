@@ -250,7 +250,10 @@ export const OllAlgorithms: Record<string, {
     },
     "411400403": { 
         tags: ["GAN:50"],
-        solve: ["(r' U) (r2 U' r2 U') (r2 U r')"]
+        solve: [
+            "(L' B) (L2 F' L2 B') (L2 F L')",
+            "(r' U) (r2 D' r2 D') (r2 D r')", // incorrect in GAN site
+        ]
     },
     "411000433": { 
         tags: ["GAN:51"],
