@@ -6,6 +6,7 @@ import { Faces } from "./face";
 import type { CubeColor, StickerColor } from "./colors";
 
 export class Cube {
+    private event = new EventTarget();
     public size = 3;
     public cubelets: Cubelet[] = [];
     public cubeletsMapId: { [id: number]: number } = {}; // id to index map
@@ -154,6 +155,7 @@ export class Cube {
 
     async runNotation(sequence: string|TwistNotation[], onComplete?: ((cubelets: Cubelet[]) => void)) {
         const emptyQueue = this.queueTwist.length === 0;
+        let twistNotations: TwistNotation[] = [];
         if (typeof sequence === 'string') {
             const moves = sequence.trim().split('')
             for (let i = 0; i < moves.length; i++) {
@@ -163,16 +165,24 @@ export class Cube {
                     move += nextMove
                     i++;
                 }
+                if (move.trim() === '') continue;
                 this.queueTwist.push(move as TwistNotation);
+                twistNotations.push(move as TwistNotation);
             }
         } else {
             this.queueTwist.push(...sequence);
+            twistNotations.push(...sequence);
         }
+        this.event.dispatchEvent(new CustomEvent('runNotation', { 
+            detail: { notations: twistNotations, emptyQueue } 
+        }));
         if (!emptyQueue) {
             return;
         }
         while (this.queueTwist.length > 0) {
-            await this.twist(this.queueTwist.shift() as TwistNotation)
+            const notation = this.queueTwist[0] as TwistNotation;
+            await this.twist(notation);
+            this.queueTwist.shift() // remove the executed twist from the queue
         }
         if (onComplete) onComplete(this.cubelets)
     }
@@ -186,6 +196,9 @@ export class Cube {
             if (onComplete) onComplete(this.cubelets);
         }
 
+        this.event.dispatchEvent(new CustomEvent('twist', { 
+            detail: { notation, position: 'start' } 
+        }));
 
         const swap = this.cubelets.slice();
         if (notation === 'U') {
@@ -574,8 +587,15 @@ export class Cube {
             ]);
         } else {
             console.warn(`Unsupported notation: ${notation}`);
+            this.event.dispatchEvent(new CustomEvent('twist', { 
+                detail: { notation, position: 'end', error: `Unsupported notation: ${notation}` }
+            }));
             return;
         }
+
+        this.event.dispatchEvent(new CustomEvent('twist', { 
+            detail: { notation, position: 'end' } 
+        }));
 
         if (notation === notation.toLowerCase()) {
             return;
@@ -687,6 +707,14 @@ export class Cube {
         this.cubelets.forEach(cubelet => {
             cubelet.showStickerText(show);
         });
+    }
+
+    on(eventName: string, callback: (event: Event) => void) {
+        this.event.addEventListener(eventName, callback);
+    }
+    
+    off(eventName: string, callback: (event: Event) => void) {
+        this.event.removeEventListener(eventName, callback);
     }
 }
 

@@ -6,6 +6,7 @@ import { Cube } from './classes/cube';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { CFOP } from './classes/solvers/cfop';
 import { sleep } from './utils/utils';
+import { createLayout, set, utils } from 'animejs';
 
 const isDev = import.meta.env.DEV;
 
@@ -97,8 +98,8 @@ async function main() {
   }
   renderer.setAnimationLoop(animate);
 
-  c.showStickerLabel(true)
-  await sleep(3_000)
+  // c.showStickerLabel(true)
+  await sleep(1_000)
 
   // c.set([
   //   "RYXXBX", "BYXXXX", "RYGXXX",
@@ -112,6 +113,19 @@ async function main() {
   //   "XYXXBO", "XYXXXO", "XYGXXO",
   //   "XXXXBO", "XXXXXO", "XXGXXO",
   //   "XXXWBO", "XXXWXO", "XXGWXO"])
+  c.on('runNotation', (e) => {
+    const { notations } = (e as CustomEvent).detail;
+    for (const n of notations) {
+      window.addItem(n)
+    }
+  });
+
+  c.on('twist', (e) => {
+    const { position } = (e as CustomEvent).detail;
+    if (position == 'end') {
+      window.removeItem()
+    }
+  })
 
   // await c.scrumble(10, 0.3)
   const solver = new CFOP(c)
@@ -120,15 +134,21 @@ async function main() {
       "RY",  "Y",  "BY",
       "BYO", "OY", "GRY"])
   window.solver = solver
+
+
+
+  c.runNotation("R U R' U'")
 }
 
-
-main()
+document.addEventListener('DOMContentLoaded', main)
 
 declare global {
     interface Window {
         cube: Cube;
         solver: any;
+
+        removeItem: () => void;
+        addItem: (text: string) => void;
     }
 }
 
@@ -155,3 +175,43 @@ for (const char of notation) {
   }
 }
 
+const layout = createLayout('.layout-container', {
+  duration: 250,
+  ease: 'outQuad',
+  leaveTo: {
+    transform: 'translateY(-100px) scale(.25)',
+    opacity: 0,
+    duration: 350, // Applied to the elements leaving the layout
+    ease: 'out(3)' // Applied to the elements leaving the layout
+  },
+  enterFrom: {
+    transform: 'translateY(100px) scale(.25)',
+    opacity: 0,
+    duration: 350, // Applied to the elements entering the layout
+    ease: 'out(3)' // Applied to the elements entering the layout
+  }
+});
+
+function removeItem() {
+  layout.update(({ root }) => {
+    const items = root.querySelectorAll('.item:not(.hidden)');
+    if (items[0] == undefined) return;
+    items[0].classList.add('hidden'); // temporarily hide the element using `display: none`
+  }).then(() => {
+    // Remove the elements from the DOM when the animation finishes
+    layout.leaving.forEach($el => $el.remove());
+  });
+}
+
+function addItem(text: string) {
+  layout.update(({root}) => {
+    const $el = document.createElement('div');
+    $el.classList.add('item', 'bg-gray-700', 'text-white', 'p-2', 'rounded');
+    $el.textContent = text;
+    root.appendChild($el);
+  })
+}
+
+
+window.removeItem = removeItem;
+window.addItem = addItem;
