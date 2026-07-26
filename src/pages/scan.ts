@@ -687,10 +687,17 @@ export async function loadScanPage() {
   });
 
   function validateCube() {
+    const { scanned } = scanManager.getProgress();
+    if (scanned < 6) {
+      validationWarning.classList.add('hidden');
+      validateBtn.classList.remove('hidden');
+      solutionLink.classList.add('hidden');
+      return;
+    }
     const counts: Record<string, number> = { W: 0, O: 0, B: 0, R: 0, G: 0, Y: 0 };
     FACE_KEYS.forEach(fk => {
       const face = scanManager.getFace(fk);
-      if (!face) return;
+      if (!face || !face.scanned) return;
       face.colors.forEach(row => row.forEach(c => { if (c && counts[c] !== undefined) counts[c]++; }));
     });
     const issues: string[] = [];
