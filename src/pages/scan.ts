@@ -1,7 +1,8 @@
 import type { RubikColor } from '../cv/colorDetector';
 import { COLOR_DISPLAY } from '../cv/colorDetector';
-import { ScanStateManager, type FaceName } from '../scan/scanState';
-import { updateProgressUI, updateFaceInstruction, updateCubeNetFace } from '../scan/scanUI';
+import { ScanStateManager, type FaceName, FACE_INSTRUCTIONS } from '../scan/scanState';
+import { updateProgressUI, updateFaceInstruction } from '../scan/scanUI';
+import { ScanCube3D } from '../scan/scanCube3D';
 
 let cleanupFn: (() => void) | null = null;
 
@@ -198,8 +199,11 @@ export async function loadScanPage() {
 
           <!-- Scan Panel -->
           <div id="panel-scan" class="panel bg-gray-300 rounded-xl rounded-tl-none p-4">
-            <div id="cube-net" class="flex flex-col items-center gap-2"></div>
-            <div class="text-center text-sm text-gray-500 mt-3">Click a face to select it for scanning.</div>
+            <div class="flex items-center justify-between mb-2">
+              <div id="scan-face-label" class="text-sm text-gray-600 font-medium">U — Atas (Putih)</div>
+              <button id="toggle-3d-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">3D</button>
+            </div>
+            <div id="cube-3d-container" class="w-full h-[420px] rounded-lg overflow-hidden cursor-grab active:cursor-grabbing"></div>
           </div>
 
           <!-- Edit Panel -->
@@ -310,10 +314,12 @@ export async function loadScanPage() {
   const validationWarning = document.getElementById('validation-warning')!;
   const colorPicker = document.getElementById('color-picker')!;
   const loadingOverlay = document.getElementById('loading-overlay')!;
-  const cubeNetContainer = document.getElementById('cube-net')!;
   const cubeNetEditContainer = document.getElementById('cube-net-edit')!;
   const tuneGrid = document.getElementById('tune-grid')!;
   const tuneInstructions = document.getElementById('tune-instructions')!;
+  const cube3dContainer = document.getElementById('cube-3d-container')!;
+  const toggle3dBtn = document.getElementById('toggle-3d-btn')!;
+  const scanFaceLabel = document.getElementById('scan-face-label')!;
 
   const dots: HTMLElement[] = [];
   for (let i = 0; i < 9; i++) dots.push(document.getElementById(`dot-${i}`)!);
@@ -366,8 +372,10 @@ export async function loadScanPage() {
   updateTuneStatus();
 
   // --- Cube Net ---
-  function buildNet(prefix: string) {
-    const el = prefix === 'net' ? cubeNetContainer : cubeNetEditContainer;
+  let cube3d: ScanCube3D | null = null;
+
+  function buildNet() {
+    const el = cubeNetEditContainer;
     el.innerHTML = '';
     NET_LAYOUT.forEach(row => {
       const rowEl = document.createElement('div');
@@ -377,14 +385,13 @@ export async function loadScanPage() {
           const face = document.createElement('div');
           face.className = 'face-cell';
           face.dataset.face = fk;
-          face.id = `${prefix}-${fk}`;
+          face.id = `net-edit-${fk}`;
           for (let i = 0; i < 9; i++) {
             const tile = document.createElement('div');
             tile.className = 'sticker';
             tile.dataset.index = String(i);
             face.appendChild(tile);
           }
-          if (prefix === 'net') face.addEventListener('click', () => selectFace(fk));
           rowEl.appendChild(face);
         } else {
           const spacer = document.createElement('div');
@@ -395,16 +402,38 @@ export async function loadScanPage() {
       el.appendChild(rowEl);
     });
   }
-  buildNet('net');
-  buildNet('net-edit');
+  buildNet();
+
+  // --- 3D Cube ---
+  cube3d = new ScanCube3D(cube3dContainer, (face) => {
+    selectFace(face);
+  });
+
+  // --- 2D / 3D Toggle ---
+  let viewMode: '2d' | '3d' = '2d';
+  toggle3dBtn.addEventListener('click', async () => {
+    if (cube3d?.isAnimating) return;
+    if (viewMode === '2d') {
+      viewMode = '3d';
+      toggle3dBtn.textContent = '2D';
+      await cube3d!.fold();
+    } else {
+      viewMode = '2d';
+      toggle3dBtn.textContent = '3D';
+      await cube3d!.unfold();
+    }
+  });
 
   function selectFace(face: FaceName) {
     currentFace = face;
     scanManager.setCurrentFace(face);
-    document.querySelectorAll('#cube-net .face-cell').forEach(f => {
-      f.classList.toggle('selected', f.id === `net-${face}`);
+    document.querySelectorAll('#cube-net-edit .face-cell').forEach(f => {
+      f.classList.toggle('selected', f.id === `net-edit-${face}`);
     });
+    cube3d?.setSelectedFace(face);
     updateFaceInstruction(face);
+    const info = FACE_INSTRUCTIONS[face] || face;
+    scanFaceLabel.textContent = `${face} — ${info}`;
   }
   selectFace(currentFace);
   renderFaces();
@@ -429,20 +458,24 @@ export async function loadScanPage() {
   }
 
   function renderFaces() {
-    const renderNet = (prefix: string) => {
-      FACE_KEYS.forEach(fk => {
-        const faceEl = document.getElementById(`${prefix}-${fk}`);
-        if (!faceEl) return;
-        const face = scanManager.getFace(fk);
-        faceEl.querySelectorAll('.sticker').forEach((tile, i) => {
-          const row = Math.floor(i / 3), col = i % 3;
-          const color = face?.colors[row][col];
-          (tile as HTMLElement).style.background = color ? COLOR_DISPLAY[color].hex : '#e5e7eb';
-        });
+    FACE_KEYS.forEach(fk => {
+      const faceEl = document.getElementById(`net-edit-${fk}`);
+      if (!faceEl) return;
+      const face = scanManager.getFace(fk);
+      faceEl.querySelectorAll('.sticker').forEach((tile, i) => {
+        const row = Math.floor(i / 3), col = i % 3;
+        const color = face?.colors[row][col];
+          (tile as HTMLElement).style.background = color ? COLOR_DISPLAY[color].hex : '#9ca3af';
       });
-    };
-    renderNet('net');
-    renderNet('net-edit');
+    });
+
+    if (cube3d) {
+      cube3d.updateAllFaces((fk) => {
+        const face = scanManager.getFace(fk);
+        if (!face || !face.scanned) return null;
+        return face.colors as RubikColor[][];
+      });
+    }
   }
 
   // --- Tabs ---
@@ -623,7 +656,6 @@ export async function loadScanPage() {
 
     const face = scanManager.getCurrentFace();
     scanManager.recordFace(colors);
-    updateCubeNetFace(face, colors);
     renderFaces();
     saveCubeState(scanManager);
 
@@ -732,6 +764,7 @@ export async function loadScanPage() {
   cleanupFn = () => {
     if (liveLoopId) cancelAnimationFrame(liveLoopId);
     if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+    cube3d?.dispose();
     cleanupFn = null;
   };
 }
