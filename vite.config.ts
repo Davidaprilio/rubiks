@@ -12,6 +12,17 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'opencv': ['@techstark/opencv-js'],
+          'three': ['three'],
+          'vendor': ['gsap', 'animejs', 'troika-three-text'],
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     setupFiles: ['./src/__tests__/setup.ts'],
