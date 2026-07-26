@@ -7,6 +7,7 @@ let cleanupFn: (() => void) | null = null;
 
 const LS_KEY = 'rubik-tuned-colors';
 const LS_KEY_MIRROR = 'rubik-mirror';
+const LS_KEY_CUBE = 'rubik-cube-state';
 
 function rgbToLab(r: number, g: number, b: number): [number, number, number] {
   const linearize = (c: number) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
@@ -93,6 +94,17 @@ function loadMirrorState(): boolean {
 
 function saveMirrorState(mirror: boolean) {
   localStorage.setItem(LS_KEY_MIRROR, String(mirror));
+}
+
+function loadCubeState(scanManager: ScanStateManager) {
+  try {
+    const saved = localStorage.getItem(LS_KEY_CUBE);
+    if (saved) scanManager.loadFaceState(JSON.parse(saved));
+  } catch {}
+}
+
+function saveCubeState(scanManager: ScanStateManager) {
+  localStorage.setItem(LS_KEY_CUBE, JSON.stringify(scanManager.exportFaceState()));
 }
 
 export async function loadScanPage() {
@@ -256,8 +268,9 @@ export async function loadScanPage() {
 
   // State
   const scanManager = new ScanStateManager();
+  loadCubeState(scanManager);
   let currentPanel: 'tune' | 'scan' | 'edit' = 'scan';
-  let currentFace: FaceName = 'U';
+  let currentFace: FaceName = scanManager.getCurrentFace();
   let selectedTuneColor: RubikColor = 'G';
   let videoStream: MediaStream | null = null;
   let liveLoopId: number | null = null;
@@ -393,7 +406,9 @@ export async function loadScanPage() {
     });
     updateFaceInstruction(face);
   }
-  selectFace('U');
+  selectFace(currentFace);
+  renderFaces();
+  { const { scanned } = scanManager.getProgress(); updateProgressUI(scanned, 6); guideIndex = scanned; }
 
   // --- Next face guide ---
   function showGuide(toFace: FaceName, arrow: string, text: string) {
@@ -466,7 +481,7 @@ export async function loadScanPage() {
         e.stopPropagation();
         const face = scanManager.getFace(faceKey)!;
         face.colors[Math.floor(index / 3)][index % 3] = c.key;
-        renderFaces(); hidePicker(); validateCube();
+        renderFaces(); hidePicker(); validateCube(); saveCubeState(scanManager);
       });
       colorPicker.appendChild(opt);
     });
@@ -610,6 +625,7 @@ export async function loadScanPage() {
     scanManager.recordFace(colors);
     updateCubeNetFace(face, colors);
     renderFaces();
+    saveCubeState(scanManager);
 
     const { scanned } = scanManager.getProgress();
     updateProgressUI(scanned, 6);
@@ -664,6 +680,7 @@ export async function loadScanPage() {
   clearBtn.addEventListener('click', () => {
     scanManager.reset(); renderFaces(); selectFace('U'); updateProgressUI(0, 6);
     guideIndex = 0; hideGuide();
+    localStorage.removeItem(LS_KEY_CUBE);
     statusEl.textContent = 'Align your cube and press Capture.';
     validationWarning.classList.add('hidden'); solutionLink.classList.add('hidden');
     validateBtn.classList.remove('hidden');

@@ -134,6 +134,31 @@ export class ScanStateManager {
   getAllFaces(): ScannedFace[] {
     return FACE_ORDER.map(name => this.state.faces.get(name)!);
   }
+
+  loadFaceState(data: { name: FaceName; colors: RubikColor[][]; scanned: boolean }[]) {
+    for (const entry of data) {
+      const face = this.state.faces.get(entry.name);
+      if (face) {
+        face.colors = entry.colors;
+        face.scanned = entry.scanned;
+      }
+    }
+    // Set currentFaceIndex to first unscanned face
+    this.state.currentFaceIndex = 0;
+    while (this.state.currentFaceIndex < FACE_ORDER.length) {
+      const f = this.state.faces.get(FACE_ORDER[this.state.currentFaceIndex])!;
+      if (!f.scanned) break;
+      this.state.currentFaceIndex++;
+    }
+    this.state.isComplete = this.state.currentFaceIndex >= FACE_ORDER.length;
+  }
+
+  exportFaceState(): { name: FaceName; colors: RubikColor[][]; scanned: boolean }[] {
+    return FACE_ORDER.map(name => {
+      const face = this.state.faces.get(name)!;
+      return { name, colors: face.colors, scanned: face.scanned };
+    });
+  }
   
   // Convert scanned state to Cube.set() format
   // Cube state format: 27 cubelets, each with 6 chars (F U R D L B)
