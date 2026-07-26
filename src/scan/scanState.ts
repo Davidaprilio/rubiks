@@ -14,7 +14,7 @@ export interface ScanState {
   isComplete: boolean;
 }
 
-const FACE_ORDER: FaceName[] = ['U', 'D', 'L', 'R', 'F', 'B'];
+const FACE_ORDER: FaceName[] = ['U', 'F', 'R', 'D', 'B', 'L'];
 
 const FACE_INSTRUCTIONS: Record<FaceName, string> = {
   U: 'Show the UP face (Yellow center)',
@@ -72,6 +72,11 @@ export class ScanStateManager {
   getCurrentFace(): FaceName {
     return FACE_ORDER[this.state.currentFaceIndex];
   }
+
+  setCurrentFace(name: FaceName) {
+    const idx = FACE_ORDER.indexOf(name);
+    if (idx !== -1) this.state.currentFaceIndex = idx;
+  }
   
   getCurrentInstruction(): string {
     return FACE_INSTRUCTIONS[this.getCurrentFace()];
@@ -97,16 +102,19 @@ export class ScanStateManager {
     const centerColor = colors[1][1];
     if (centerColor !== FACE_CENTER_COLORS[currentFace]) {
       console.warn(`Center color mismatch: expected ${FACE_CENTER_COLORS[currentFace]}, got ${centerColor}`);
-      // Allow it anyway but warn
     }
     
     face.colors = colors;
     face.scanned = true;
     
-    // Move to next face
+    // Advance to next unscanned face in order
     this.state.currentFaceIndex++;
+    while (this.state.currentFaceIndex < FACE_ORDER.length) {
+      const nextFace = this.state.faces.get(FACE_ORDER[this.state.currentFaceIndex])!;
+      if (!nextFace.scanned) break;
+      this.state.currentFaceIndex++;
+    }
     
-    // Check if all faces are scanned
     if (this.state.currentFaceIndex >= FACE_ORDER.length) {
       this.state.isComplete = true;
     }

@@ -51,10 +51,10 @@ function rgbToHex(r: number, g: number, b: number): string {
 const FACE_KEYS: FaceName[] = ['U', 'F', 'R', 'D', 'B', 'L'];
 
 const NET_LAYOUT: (FaceName | null)[][] = [
-  ['U', null, null, null],
-  ['F', 'R', null, null],
-  [null, null, 'D', 'B'],
-  [null, null, null, 'L'],
+  ['U', null, null],
+  ['F', 'R', null],
+  [null, 'D', 'B'],
+  [null, null, 'L'],
 ];
 
 const UI_COLORS: { key: RubikColor; name: string; hex: string }[] = [
@@ -257,7 +257,7 @@ export async function loadScanPage() {
   // State
   const scanManager = new ScanStateManager();
   let currentPanel: 'tune' | 'scan' | 'edit' = 'scan';
-  let currentFace: FaceName = 'F';
+  let currentFace: FaceName = 'U';
   let selectedTuneColor: RubikColor = 'G';
   let videoStream: MediaStream | null = null;
   let liveLoopId: number | null = null;
@@ -265,13 +265,13 @@ export async function loadScanPage() {
   let guideTimeout: number | null = null;
 
   // Guide sequence: after scanning each face, show how to rotate to next
-  // Sequence: F → U → L → U → L → U
+  // Sequence: U → F → R → D → B → L
   const GUIDE_SEQUENCE: { from: FaceName; to: FaceName; arrow: string; text: string }[] = [
-    { from: 'F', to: 'U', arrow: '↑', text: 'Miringkan ke Atas' },
-    { from: 'U', to: 'L', arrow: '←', text: 'Putar ke Kiri' },
-    { from: 'L', to: 'U', arrow: '↑', text: 'Miringkan ke Atas' },
-    { from: 'U', to: 'L', arrow: '←', text: 'Putar ke Kiri' },
-    { from: 'L', to: 'U', arrow: '↑', text: 'Miringkan ke Atas' },
+    { from: 'U', to: 'F', arrow: '↑', text: 'Miringkan ke Atas' },
+    { from: 'F', to: 'R', arrow: '→', text: 'Putar ke Kanan' },
+    { from: 'R', to: 'D', arrow: '↑', text: 'Miringkan ke Atas' },
+    { from: 'D', to: 'B', arrow: '→', text: 'Putar ke Kanan' },
+    { from: 'B', to: 'L', arrow: '↑', text: 'Miringkan ke Atas' },
   ];
   let guideIndex = 0;
 
@@ -387,12 +387,13 @@ export async function loadScanPage() {
 
   function selectFace(face: FaceName) {
     currentFace = face;
+    scanManager.setCurrentFace(face);
     document.querySelectorAll('#cube-net .face-cell').forEach(f => {
       f.classList.toggle('selected', f.id === `net-${face}`);
     });
     updateFaceInstruction(face);
   }
-  selectFace('F');
+  selectFace('U');
 
   // --- Next face guide ---
   function showGuide(toFace: FaceName, arrow: string, text: string) {
@@ -661,7 +662,7 @@ export async function loadScanPage() {
 
   // --- Clear / Validate ---
   clearBtn.addEventListener('click', () => {
-    scanManager.reset(); renderFaces(); selectFace('F'); updateProgressUI(0, 6);
+    scanManager.reset(); renderFaces(); selectFace('U'); updateProgressUI(0, 6);
     guideIndex = 0; hideGuide();
     statusEl.textContent = 'Align your cube and press Capture.';
     validationWarning.classList.add('hidden'); solutionLink.classList.add('hidden');
