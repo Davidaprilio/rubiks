@@ -7,6 +7,8 @@ import { CFOP } from '../classes/solvers/cfop';
 import { sleep } from '../utils/utils';
 import { createLayout } from 'animejs';
 import { navigate } from '../router';
+import { clearVirtualSession, loadVirtualSession } from '../solver/virtualCube';
+import { mountSolutionPanel } from './homeSolution';
 
 const isDev = import.meta.env.DEV;
 
@@ -123,14 +125,25 @@ export async function loadHomePage() {
     }
   })
 
-  const solver = new CFOP(c)
-  solver.setupOllCube([
-      "BYR", "YG", "GOY",
-      "RY",  "Y",  "BY",
-      "BYO", "OY", "GRY"])
-  window.solver = solver
+  // coming from the scanner: show the scanned cube and its solution instead of the demo
+  const session = loadVirtualSession()
+  let disposeSolution: (() => void) | null = null
+  if (session) {
+    c.set(session.cube)
+    disposeSolution = mountSolutionPanel(container, c, session, () => {
+      clearVirtualSession()
+      navigate('/')
+    })
+  } else {
+    const solver = new CFOP(c)
+    solver.setupOllCube([
+        "BYR", "YG", "GOY",
+        "RY",  "Y",  "BY",
+        "BYO", "OY", "GRY"])
+    window.solver = solver
 
-  c.runNotation("R U R' U'")
+    c.runNotation("R U R' U'")
+  }
 
   // Setup notation buttons
   const notation = ["U", "D", "L", "R", "F", "B",
@@ -240,6 +253,7 @@ export async function loadHomePage() {
   window.addEventListener('keyup', onKeyUp);
 
   cleanupFn = () => {
+    disposeSolution?.();
     renderer.setAnimationLoop(null);
     trackballControl.dispose();
     renderer.dispose();

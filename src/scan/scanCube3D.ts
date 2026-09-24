@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { RubikColor } from '../cv/colorDetector';
 import { COLOR_DISPLAY } from '../cv/colorDetector';
-import type { FaceName } from './scanState';
+import { FACE_CENTER_COLORS, type FaceName } from './scanState';
 
 type OnFaceClick = (face: FaceName) => void;
 
@@ -155,7 +155,8 @@ export class ScanCube3D {
         for (let col = 0; col < 3; col++) {
           const geo = new THREE.PlaneGeometry(STICKER_SIZE, STICKER_SIZE);
           const mat = new THREE.MeshStandardMaterial({
-            color: hexToThree(DEFAULT_HEX),
+            // centers never move, so they always show the color of their face
+            color: hexToThree(row === 1 && col === 1 ? COLOR_DISPLAY[FACE_CENTER_COLORS[fk]].hex : DEFAULT_HEX),
             roughness: 0.35,
             metalness: 0.05,
           });
@@ -188,24 +189,31 @@ export class ScanCube3D {
   }
 
   private addHighlightBorder() {
-    const size = FACE_SIZE + 0.15;
+    // frame with a hole, so the selected face (and its fixed center color) stays fully visible
+    const size = FACE_SIZE + 0.3;
+    const roundedRect = (path: THREE.Path, s: number, r: number) => {
+      const h = s / 2;
+      path.moveTo(-h + r, -h);
+      path.lineTo(h - r, -h);
+      path.quadraticCurveTo(h, -h, h, -h + r);
+      path.lineTo(h, h - r);
+      path.quadraticCurveTo(h, h, h - r, h);
+      path.lineTo(-h + r, h);
+      path.quadraticCurveTo(-h, h, -h, h - r);
+      path.lineTo(-h, -h + r);
+      path.quadraticCurveTo(-h, -h, -h + r, -h);
+    };
     const shape = new THREE.Shape();
-    const r = 0.08;
-    shape.moveTo(-size / 2 + r, -size / 2);
-    shape.lineTo(size / 2 - r, -size / 2);
-    shape.quadraticCurveTo(size / 2, -size / 2, size / 2, -size / 2 + r);
-    shape.lineTo(size / 2, size / 2 - r);
-    shape.quadraticCurveTo(size / 2, size / 2, size / 2 - r, size / 2);
-    shape.lineTo(-size / 2 + r, size / 2);
-    shape.quadraticCurveTo(-size / 2, size / 2, -size / 2, size / 2 - r);
-    shape.lineTo(-size / 2, -size / 2 + r);
-    shape.quadraticCurveTo(-size / 2, -size / 2, -size / 2 + r, -size / 2);
+    roundedRect(shape, size, 0.1);
+    const hole = new THREE.Path();
+    roundedRect(hole, FACE_SIZE + 0.02, 0.04);
+    shape.holes.push(hole);
 
     const geo = new THREE.ShapeGeometry(shape);
     const mat = new THREE.MeshBasicMaterial({
       color: 0x3b82f6,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.9,
       side: THREE.DoubleSide,
     });
     this.highlightBorder = new THREE.Mesh(geo, mat);
@@ -220,7 +228,7 @@ export class ScanCube3D {
     if (!f) return;
     this.highlightBorder.position.copy(f.group.position);
     this.highlightBorder.rotation.copy(f.group.rotation);
-    this.highlightBorder.position.z += 0.02;
+    this.highlightBorder.translateZ(0.02);
   }
 
   get is3DMode() { return this.is3D; }
@@ -310,7 +318,7 @@ export class ScanCube3D {
     for (let row = 0; row < 3; row++) {
       for (let col = 0; col < 3; col++) {
         const idx = row * 3 + col;
-        const color = colors[row]?.[col];
+        const color = idx === 4 ? FACE_CENTER_COLORS[face] : colors[row]?.[col];
         const mat = f.stickers[idx].material as THREE.MeshStandardMaterial;
         mat.color = hexToThree(color ? COLOR_DISPLAY[color].hex : DEFAULT_HEX);
       }

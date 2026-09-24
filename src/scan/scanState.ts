@@ -34,6 +34,15 @@ const FACE_CENTER_COLORS: Record<FaceName, RubikColor> = {
   B: 'O',
 };
 
+/** Unscanned grid: the center is fixed by the face, the rest is a placeholder. */
+function defaultColors(name: FaceName): RubikColor[][] {
+  return [
+    ['W', 'W', 'W'],
+    ['W', FACE_CENTER_COLORS[name], 'W'],
+    ['W', 'W', 'W'],
+  ];
+}
+
 export class ScanStateManager {
   private state: ScanState;
   private onUpdate: ((state: ScanState) => void) | null = null;
@@ -49,11 +58,7 @@ export class ScanStateManager {
     for (const name of FACE_ORDER) {
       this.state.faces.set(name, {
         name,
-        colors: [
-          ['W', 'W', 'W'],
-          ['W', 'W', 'W'],
-          ['W', 'W', 'W'],
-        ],
+        colors: defaultColors(name),
         scanned: false,
       });
     }
@@ -104,6 +109,8 @@ export class ScanStateManager {
       console.warn(`Center color mismatch: expected ${FACE_CENTER_COLORS[currentFace]}, got ${centerColor}`);
     }
     
+    // The center never moves, so it is always the color that belongs to this face
+    colors[1][1] = FACE_CENTER_COLORS[currentFace];
     face.colors = colors;
     face.scanned = true;
     
@@ -140,6 +147,7 @@ export class ScanStateManager {
       const face = this.state.faces.get(entry.name);
       if (face) {
         face.colors = entry.colors;
+        face.colors[1][1] = FACE_CENTER_COLORS[entry.name];
         face.scanned = entry.scanned;
       }
     }
@@ -249,11 +257,7 @@ export class ScanStateManager {
     this.state.isComplete = false;
     for (const face of this.state.faces.values()) {
       face.scanned = false;
-      face.colors = [
-        ['W', 'W', 'W'],
-        ['W', 'W', 'W'],
-        ['W', 'W', 'W'],
-      ];
+      face.colors = defaultColors(face.name);
     }
     this.notifyUpdate();
   }

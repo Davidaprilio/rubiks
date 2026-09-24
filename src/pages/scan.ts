@@ -1,8 +1,12 @@
 import type { RubikColor } from '../cv/colorDetector';
 import { COLOR_DISPLAY } from '../cv/colorDetector';
-import { ScanStateManager, type FaceName, FACE_INSTRUCTIONS } from '../scan/scanState';
+import { ScanStateManager, type FaceName, FACE_INSTRUCTIONS, FACE_CENTER_COLORS } from '../scan/scanState';
 import { updateProgressUI, updateFaceInstruction } from '../scan/scanUI';
 import { ScanCube3D } from '../scan/scanCube3D';
+import { SOLVE_METHODS, scanToState, type ScannedFaces } from '../solver';
+import { buildVirtualSession, saveVirtualSession, type VirtualSession } from '../solver/virtualCube';
+import { navigate } from '../router';
+import { renderSolution, renderSolutionMessage } from '../scan/solutionUI';
 
 let cleanupFn: (() => void) | null = null;
 
@@ -200,7 +204,7 @@ export async function loadScanPage() {
           <!-- Scan Panel -->
           <div id="panel-scan" class="panel bg-gray-300 rounded-xl rounded-tl-none p-4">
             <div class="flex items-center justify-between mb-2">
-              <div id="scan-face-label" class="text-sm text-gray-600 font-medium">U — Atas (Putih)</div>
+              <div id="scan-face-label" class="text-sm text-gray-600 font-medium">U — Atas (Kuning)</div>
               <button id="toggle-3d-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">3D</button>
             </div>
             <div id="cube-3d-container" class="w-full h-[420px] rounded-lg overflow-hidden cursor-grab active:cursor-grabbing"></div>
@@ -215,10 +219,22 @@ export async function loadScanPage() {
           <div id="net-actions" class="flex gap-2 justify-center mt-4">
             <button id="clear-btn" class="bg-white hover:bg-red-100 text-gray-700 font-bold px-4 py-2 rounded-lg border border-gray-300">Clear</button>
             <button id="validate-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg">Validate</button>
-            <a id="solution-link" class="hidden bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-lg no-underline" href="#" target="_blank">Calculate Solution</a>
+            <button id="solution-link" class="hidden bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold px-6 py-2 rounded-lg">Calculate Solution</button>
             <button id="reset-tone-btn" class="hidden bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-lg">Reset Color Tone</button>
           </div>
           <div id="validation-warning" class="hidden text-red-600 text-center mt-2 text-sm font-medium"></div>
+
+          <div id="solution-panel" class="hidden mt-4 bg-white rounded-xl border border-gray-300 p-4">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <h2 class="font-bold text-gray-800">Solution</h2>
+              <label class="text-sm text-gray-600 flex items-center gap-2">
+                Method
+                <select id="solve-method" class="bg-white border border-gray-300 rounded px-2 py-1 text-sm"></select>
+              </label>
+            </div>
+            <div id="solution-body"></div>
+            <button id="continue-virtual" class="hidden mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2 rounded-lg">Continue to Virtual Cube →</button>
+          </div>
         </div>
       </div>
     </div>
@@ -257,6 +273,11 @@ export async function loadScanPage() {
       .face-cell.selected { box-shadow: 0 0 0 3px #1e40af; }
       .sticker { aspect-ratio: 1; background: #e5e7eb; cursor: pointer; }
       .sticker:hover { outline: 2px solid #839cb4; outline-offset: -2px; }
+      .sticker.center {
+        cursor: default; display: flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: 13px; color: rgba(0,0,0,0.55);
+      }
+      .sticker.center:hover { outline: none; }
       #panel-edit .face-cell:hover { box-shadow: none; }
       .tune-card {
         display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -274,7 +295,7 @@ export async function loadScanPage() {
   const scanManager = new ScanStateManager();
   loadCubeState(scanManager);
   let currentPanel: 'tune' | 'scan' | 'edit' = 'scan';
-  let currentFace: FaceName = scanManager.getCurrentFace();
+  let currentFace: FaceName = scanManager.getCurrentFace() ?? 'U'; // undefined once all faces are scanned
   let selectedTuneColor: RubikColor = 'G';
   let videoStream: MediaStream | null = null;
   let liveLoopId: number | null = null;
@@ -309,7 +330,12 @@ export async function loadScanPage() {
   const guideText = document.getElementById('guide-text')!;
   const clearBtn = document.getElementById('clear-btn')!;
   const validateBtn = document.getElementById('validate-btn')!;
-  const solutionLink = document.getElementById('solution-link') as HTMLAnchorElement;
+  const solutionLink = document.getElementById('solution-link') as HTMLButtonElement;
+  const solutionPanel = document.getElementById('solution-panel')!;
+  const solutionBody = document.getElementById('solution-body')!;
+  const solveMethodSelect = document.getElementById('solve-method') as HTMLSelectElement;
+  const continueVirtualBtn = document.getElementById('continue-virtual')!;
+  let virtualSession: VirtualSession | null = null;
   const resetToneBtn = document.getElementById('reset-tone-btn')!;
   const validationWarning = document.getElementById('validation-warning')!;
   const colorPicker = document.getElementById('color-picker')!;
@@ -388,8 +414,9 @@ export async function loadScanPage() {
           face.id = `net-edit-${fk}`;
           for (let i = 0; i < 9; i++) {
             const tile = document.createElement('div');
-            tile.className = 'sticker';
+            tile.className = i === 4 ? 'sticker center' : 'sticker';
             tile.dataset.index = String(i);
+            if (i === 4) { tile.textContent = fk; tile.title = 'Center is fixed for this face'; }
             face.appendChild(tile);
           }
           rowEl.appendChild(face);
@@ -528,7 +555,7 @@ export async function loadScanPage() {
 
   cubeNetEditContainer.addEventListener('click', (e) => {
     const tile = (e.target as HTMLElement).closest('.sticker') as HTMLElement;
-    if (!tile) return;
+    if (!tile || tile.classList.contains('center')) return; // centers are fixed
     const faceEl = tile.closest('.face-cell') as HTMLElement;
     if (!faceEl) return;
     showPicker(faceEl.dataset.face as FaceName, parseInt(tile.dataset.index!, 10), tile);
@@ -655,6 +682,7 @@ export async function loadScanPage() {
     }
 
     const face = scanManager.getCurrentFace();
+    const detectedCenter = colors[1][1];
     scanManager.recordFace(colors);
     renderFaces();
     saveCubeState(scanManager);
@@ -675,6 +703,11 @@ export async function loadScanPage() {
         guideIndex++;
       }
       selectFace(scanManager.getCurrentFace());
+    }
+
+    if (detectedCenter !== FACE_CENTER_COLORS[face]) {
+      const name = (k: RubikColor) => UI_COLORS.find(c => c.key === k)?.name ?? k;
+      statusEl.textContent += ` ⚠ Center read as ${name(detectedCenter)}, but face ${face} must have a ${name(FACE_CENTER_COLORS[face])} center. Check that you're showing the right face.`;
     }
   }
 
@@ -715,10 +748,12 @@ export async function loadScanPage() {
     localStorage.removeItem(LS_KEY_CUBE);
     statusEl.textContent = 'Align your cube and press Capture.';
     validationWarning.classList.add('hidden'); solutionLink.classList.add('hidden');
+    solutionPanel.classList.add('hidden');
     validateBtn.classList.remove('hidden');
   });
 
   function validateCube() {
+    solutionPanel.classList.add('hidden'); // the cube may have changed since the last solution
     const { scanned } = scanManager.getProgress();
     if (scanned < 6) {
       validationWarning.classList.add('hidden');
@@ -751,6 +786,40 @@ export async function loadScanPage() {
     validateBtn.classList.remove('hidden');
   }
   validateBtn.addEventListener('click', validateCube);
+
+  // --- Solve ---
+  SOLVE_METHODS.forEach(m => solveMethodSelect.add(new Option(m.name, m.id)));
+
+  async function calculateSolution() {
+    const method = SOLVE_METHODS.find(m => m.id === solveMethodSelect.value) ?? SOLVE_METHODS[0];
+    solutionPanel.classList.remove('hidden');
+    renderSolutionMessage(solutionBody, `Calculating ${method.name} solution...`);
+    continueVirtualBtn.classList.add('hidden');
+    virtualSession = null;
+    solutionLink.disabled = true;
+    // let the browser paint the message, the first solve builds its lookup tables
+    await new Promise(resolve => setTimeout(resolve, 30));
+    try {
+      const faces = {} as ScannedFaces;
+      FACE_KEYS.forEach(fk => { faces[fk] = scanManager.getFace(fk)!.colors; });
+      const state = scanToState(faces);
+      const solution = method.solve(state);
+      renderSolution(solutionBody, solution);
+      virtualSession = buildVirtualSession(state, solution);
+      continueVirtualBtn.classList.remove('hidden');
+    } catch (err) {
+      renderSolutionMessage(solutionBody, err instanceof Error ? err.message : 'Could not solve this cube.', true);
+    } finally {
+      solutionLink.disabled = false;
+    }
+  }
+  solutionLink.addEventListener('click', calculateSolution);
+  continueVirtualBtn.addEventListener('click', () => {
+    if (!virtualSession) return;
+    saveVirtualSession(virtualSession);
+    navigate('/');
+  });
+  solveMethodSelect.addEventListener('change', calculateSolution);
 
   // --- Reset Tone ---
   resetToneBtn.addEventListener('click', () => {
