@@ -45,7 +45,7 @@ export const OllAlgorithms: Record<string, {
             "y2 l' U2 L U L' U l",
         ]
     },
-    "411411332": { 
+    "400400332": { 
         tags: ["GAN:06"],
         solve: [
             "(r U2) (R' U' R U' r')", 
@@ -138,7 +138,7 @@ export const OllAlgorithms: Record<string, {
         tags: ["GAN:26"],
         solve: [
             "(R U' U') (R' U' R U' R')",
-            "y' R' U' R U' R' U2 R' U2 R"
+            "y' R' U' R U' R' U2 R"
         ]
     },
     "102000003": { 
@@ -182,11 +182,11 @@ export const OllAlgorithms: Record<string, {
     },
     "012400300": { 
         tags: ["GAN:35"],
-        solve: ["(R U' U') (R'2 F R F') (R U' U' R')"]
+        solve: ["(R U' U') (R2 F R F') (R U' U' R')"]
     },
     "012002300": { 
         tags: ["GAN:36"],
-        solve: ["(R' U' R U') (R' U R U) (l U' R' U)"]
+        solve: ["(R' U' R U') (R' U R U) (R B' R' B)", "(R' U' R U') (R' U R U) (l U' R' U) x"]
     },
     "002002330": { 
         tags: ["GAN:37"],
@@ -252,7 +252,7 @@ export const OllAlgorithms: Record<string, {
         tags: ["GAN:50"],
         solve: [
             "(L' B) (L2 F' L2 B') (L2 F L')",
-            "(r' U) (r2 D' r2 D') (r2 D r')", // incorrect in GAN site
+            "(r' U) (r2 U' r2 U') (r2 U r')", // incorrect in GAN site
         ]
     },
     "411000433": { 

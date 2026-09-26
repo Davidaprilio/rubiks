@@ -7,38 +7,13 @@ import { SOLVE_METHODS, scanToState, type ScannedFaces } from '../solver';
 import { buildVirtualSession, saveVirtualSession, type VirtualSession } from '../solver/virtualCube';
 import { navigate } from '../router';
 import { renderSolution, renderSolutionMessage } from '../scan/solutionUI';
+import {
+  DEFAULT_TUNED, TUNED_COLORS_KEY, classifyColor, loadMirrorState, loadTunedColors, saveMirrorState, saveTunedColors,
+} from '../cv/colorClassify';
 
 let cleanupFn: (() => void) | null = null;
 
-const LS_KEY = 'rubik-tuned-colors';
-const LS_KEY_MIRROR = 'rubik-mirror';
 const LS_KEY_CUBE = 'rubik-cube-state';
-
-function rgbToLab(r: number, g: number, b: number): [number, number, number] {
-  const linearize = (c: number) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
-  const R = linearize(r), G = linearize(g), B = linearize(b);
-  const x = R * 0.4124564 + G * 0.3575761 + B * 0.1804375;
-  const y = R * 0.2126729 + G * 0.7151522 + B * 0.0721750;
-  const z = R * 0.0193339 + G * 0.1191920 + B * 0.9503041;
-  const f = (t: number) => t > 0.008856 ? Math.cbrt(t) : (903.3 * t + 16) / 116;
-  const fx = f(x / 0.95047), fy = f(y / 1.0), fz = f(z / 1.08883);
-  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
-}
-
-function labDistance(a: [number, number, number], b: [number, number, number]) {
-  return Math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2);
-}
-
-function classifyColor(r: number, g: number, b: number, tunedColors: Record<string, {r:number,g:number,b:number}>): RubikColor {
-  const lab = rgbToLab(r, g, b);
-  let bestKey: RubikColor = 'W';
-  let bestDist = Infinity;
-  for (const [key, anchor] of Object.entries(tunedColors)) {
-    const d = labDistance(lab, rgbToLab(anchor.r, anchor.g, anchor.b));
-    if (d < bestDist) { bestDist = d; bestKey = key as RubikColor; }
-  }
-  return bestKey;
-}
 
 function sampleRGB(ctx: CanvasRenderingContext2D, cx: number, cy: number, win: number): [number, number, number] {
   const { width, height } = ctx.canvas;
@@ -72,35 +47,6 @@ const UI_COLORS: { key: RubikColor; name: string; hex: string }[] = [
   { key: 'Y', name: 'Yellow', hex: '#FFD500' },
 ];
 
-const DEFAULT_TUNED: Record<string, {r:number,g:number,b:number}> = {
-  W: { r: 142, g: 151, b: 151 },
-  O: { r: 179, g: 4, b: 21 },
-  B: { r: 13, g: 36, b: 77 },
-  R: { r: 99, g: 14, b: 32 },
-  G: { r: 6, g: 129, b: 32 },
-  Y: { r: 153, g: 163, b: 47 },
-};
-
-function loadTunedColors(): Record<string, {r:number,g:number,b:number}> {
-  try {
-    const saved = localStorage.getItem(LS_KEY);
-    if (saved) return { ...DEFAULT_TUNED, ...JSON.parse(saved) };
-  } catch {}
-  return { ...DEFAULT_TUNED };
-}
-
-function saveTunedColors(colors: Record<string, {r:number,g:number,b:number}>) {
-  localStorage.setItem(LS_KEY, JSON.stringify(colors));
-}
-
-function loadMirrorState(): boolean {
-  return localStorage.getItem(LS_KEY_MIRROR) === 'true';
-}
-
-function saveMirrorState(mirror: boolean) {
-  localStorage.setItem(LS_KEY_MIRROR, String(mirror));
-}
-
 function loadCubeState(scanManager: ScanStateManager) {
   try {
     const saved = localStorage.getItem(LS_KEY_CUBE);
@@ -122,6 +68,7 @@ export async function loadScanPage() {
         <a href="/" class="text-gray-700 hover:text-gray-900 font-bold text-lg">Rubik's Solver</a>
         <span class="text-gray-400">|</span>
         <span class="text-gray-600 font-medium">Scanner</span>
+        <a href="/tutorial" class="ml-auto text-sm text-indigo-600 hover:text-indigo-800 font-medium">Tutorial CFOP</a>
       </div>
 
       <div class="max-w-6xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4">
@@ -823,7 +770,7 @@ export async function loadScanPage() {
 
   // --- Reset Tone ---
   resetToneBtn.addEventListener('click', () => {
-    localStorage.removeItem(LS_KEY);
+    localStorage.removeItem(TUNED_COLORS_KEY);
     Object.assign(tunedColors, DEFAULT_TUNED);
     renderTuneGrid();
     statusEl.textContent = 'Color tone reset to defaults.';

@@ -15,6 +15,12 @@ route('/scan', async () => {
   setCleanup(getScanCleanup());
 });
 
+route('/tutorial', async () => {
+  const { loadTutorialPage, getTutorialCleanup } = await import('./pages/tutorial');
+  await loadTutorialPage();
+  setCleanup(getTutorialCleanup());
+});
+
 // Initialize router
 document.addEventListener('DOMContentLoaded', () => {
   initRouter();

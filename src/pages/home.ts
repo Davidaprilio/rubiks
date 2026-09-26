@@ -8,7 +8,8 @@ import { sleep } from '../utils/utils';
 import { createLayout } from 'animejs';
 import { navigate } from '../router';
 import { clearVirtualSession, loadVirtualSession } from '../solver/virtualCube';
-import { mountSolutionPanel } from './homeSolution';
+import { mountSolutionPanel, type SolutionPanel } from './homeSolution';
+import { setupHomeTracking } from './homeTracking';
 
 const isDev = import.meta.env.DEV;
 
@@ -61,9 +62,15 @@ export async function loadHomePage() {
       <div class="absolute top-0 left-0 mt-1 ml-1 z-10">
         <div class="flex overflow-hidden max-w-xl gap-x-2 layout-container"></div>
       </div>
-      <a href="/scan" class="absolute top-4 right-4 z-10 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors">
-        Scan Cube
-      </a>
+      <div class="absolute top-4 right-4 z-10 flex gap-2">
+        <button id="tracking-btn" class="text-white px-4 py-2 rounded transition-colors cursor-pointer disabled:opacity-60">Camera Tracking</button>
+        <a href="/tutorial" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">
+          Tutorial
+        </a>
+        <a href="/scan" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors">
+          Scan Cube
+        </a>
+      </div>
     </div>
   `;
 
@@ -109,6 +116,17 @@ export async function loadHomePage() {
   }
   renderer.setAnimationLoop(animate);
 
+  let solutionPanel: SolutionPanel | null = null
+  // declared before the first await so cleanup can always call it
+  const stopTracking = setupHomeTracking({
+    host: container,
+    button: document.getElementById('tracking-btn') as HTMLButtonElement,
+    cube: c,
+    camera,
+    controls: trackballControl,
+    solution: () => solutionPanel,
+  })
+
   await sleep(1_000)
 
   c.on('runNotation', (e) => {
@@ -127,22 +145,20 @@ export async function loadHomePage() {
 
   // coming from the scanner: show the scanned cube and its solution instead of the demo
   const session = loadVirtualSession()
-  let disposeSolution: (() => void) | null = null
   if (session) {
     c.set(session.cube)
-    disposeSolution = mountSolutionPanel(container, c, session, () => {
+    // tutorial practice: look from above the front right so the top layer is visible too
+    if (session.method === 'practice') {
+      camera.position.set(4.5, 5.5, 8)
+      camera.lookAt(0, 0, 0)
+    }
+    solutionPanel = mountSolutionPanel(container, c, session, () => {
       clearVirtualSession()
       navigate('/')
     })
   } else {
-    const solver = new CFOP(c)
-    solver.setupOllCube([
-        "BYR", "YG", "GOY",
-        "RY",  "Y",  "BY",
-        "BYO", "OY", "GRY"])
-    window.solver = solver
-
-    c.runNotation("R U R' U'")
+    // start solved: a solved physical cube then matches the virtual one for camera tracking
+    window.solver = new CFOP(c)
   }
 
   // Setup notation buttons
@@ -253,7 +269,8 @@ export async function loadHomePage() {
   window.addEventListener('keyup', onKeyUp);
 
   cleanupFn = () => {
-    disposeSolution?.();
+    stopTracking();
+    solutionPanel?.dispose();
     renderer.setAnimationLoop(null);
     trackballControl.dispose();
     renderer.dispose();

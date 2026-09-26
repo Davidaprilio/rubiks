@@ -20,6 +20,19 @@ export function setCleanup(fn: (() => void) | null) {
   currentCleanup = fn;
 }
 
+let shownPath: string | null = null;
+
+/** Back / forward between #fragments of the page already shown: just scroll there. */
+function onPopState() {
+  if (getCurrentRoute() === shownPath) {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (id) document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    else document.getElementById('app')?.firstElementChild?.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  void handleRoute();
+}
+
 async function handleRoute() {
   if (currentCleanup) {
     currentCleanup();
@@ -27,6 +40,7 @@ async function handleRoute() {
   }
 
   const path = getCurrentRoute();
+  shownPath = path;
   const handler = routes.get(path);
 
   if (handler) {
@@ -38,7 +52,7 @@ async function handleRoute() {
 }
 
 export function initRouter() {
-  window.addEventListener('popstate', handleRoute);
+  window.addEventListener('popstate', onPopState);
   document.addEventListener('click', (e) => {
     const link = (e.target as HTMLElement).closest('a');
     if (link && link.getAttribute('href')?.startsWith('/')) {

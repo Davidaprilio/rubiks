@@ -270,6 +270,23 @@ export function invertAlg(tokens: string[]): string[] {
   });
 }
 
+/** Merge neighbouring turns of the same layer: U U -> U2, U U' -> (nothing), U2 U -> U'. */
+export function simplifyAlg(tokens: string[]): string[] {
+  const turns = (t: string) => (t.endsWith('2') ? 2 : t.endsWith("'") ? 3 : 1);
+  const out: string[] = [];
+  for (const t of tokens) {
+    const last = out[out.length - 1];
+    if (last && last[0] === t[0] && !'xyz'.includes(t[0])) {
+      const n = (turns(last) + turns(t)) % 4;
+      out.pop();
+      if (n) out.push(t[0] + ['', '', '2', "'"][n]);
+    } else {
+      out.push(t);
+    }
+  }
+  return out;
+}
+
 export function isSolved(state: readonly Color[]): boolean {
   return state.every((c, i) => c === SOLVED[i]);
 }

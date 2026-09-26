@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "replay": "REPLAY=1 vitest run src/cv/__tests__/replay.capture.test.ts"
   },
   "devDependencies": {
     "@types/three": "^0.182.0",

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Cube } from '@/classes/cube'
 import { SOLVED, FACE_MOVES, applyAlg } from '../cube54'
 import { solveCFOP } from '../cfop'
-import { buildVirtualSession, toVirtualCubeState, toVirtualMoves } from '../virtualCube'
+import { buildVirtualSession, fromVirtualCubeState, toVirtualCubeState, toVirtualMoves } from '../virtualCube'
 
 function rng(seed: number) {
   return () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296 }
@@ -22,6 +22,13 @@ function scramble(rand: () => number, length = 22) {
 describe('virtual cube bridge', () => {
   it('a solved state matches the default virtual cube', () => {
     expect(toVirtualCubeState(SOLVED)).toEqual(new Cube().get())
+  })
+
+  it('reads the virtual cube back into solver colors', () => {
+    const state = applyAlg(SOLVED, "R U F' D2 L B'")
+    expect(fromVirtualCubeState(toVirtualCubeState(state))).toEqual(state)
+    const partial = toVirtualCubeState(SOLVED).map((c, i) => (i === 0 ? 'XXXXXX' : c))
+    expect(fromVirtualCubeState(partial).filter((c) => c === null)).toHaveLength(3)
   })
 
   it('every face move gives the same result as the virtual cube', async () => {

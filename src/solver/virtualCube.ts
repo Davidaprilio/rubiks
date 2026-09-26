@@ -36,6 +36,25 @@ export function toVirtualCubeState(state: readonly Color[]): string[] {
   return cubelets;
 }
 
+/** `Cube.get()` state -> solver sticker colors; colorless ('X') stickers become null. */
+export function fromVirtualCubeState(cubelets: readonly string[]): (Color | null)[] {
+  const state: (Color | null)[] = new Array(54).fill(null);
+  for (let z = 0; z < 3; z++) {
+    for (let y = 0; y < 3; y++) {
+      for (let x = 0; x < 3; x++) {
+        const pos: Vec3 = [x - 1, 1 - y, 1 - z];
+        const chars = cubelets[z * 9 + y * 3 + x] ?? '';
+        CUBELET_FACES.forEach((f, i) => {
+          if (!onFace(pos, f)) return;
+          const c = chars[i];
+          state[stickerAt(pos, f)] = c && 'WYROGB'.includes(c) ? (c as Color) : null;
+        });
+      }
+    }
+  }
+  return state;
+}
+
 // wide moves as face + slice; the flag tells the slice turns against the wide move direction
 const EXPANSION: Record<string, [face: string, slice: string, inverted: boolean]> = {
   r: ['R', 'M', true], l: ['L', 'M', false],
@@ -57,6 +76,8 @@ export function toVirtualMoves(moves: string[]): string[] {
 
 export interface VirtualSession {
   method: string;
+  /** shown in the player header instead of the method (e.g. a tutorial case) */
+  title?: string;
   /** scanned cube, ready for `Cube.set()` */
   cube: string[];
   /** every move to animate, in order */

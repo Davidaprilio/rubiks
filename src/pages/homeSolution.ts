@@ -11,16 +11,25 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, te
 
 const BTN = 'px-3 py-1 rounded text-sm font-bold text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer';
 
-/**
- * Player for a solution found by the scanner: shows every step and animates it on the virtual cube.
- * Returns a function that stops playback and removes the panel.
- */
+export interface SolutionPanel {
+  /** stop playback and remove the panel */
+  dispose(): void;
+  /**
+   * A move made outside the panel (e.g. detected by the camera). When it is the next move of
+   * the solution the panel plays it and advances; returns false when it was not consumed.
+   */
+  applyMove(move: string): boolean;
+  /** the next move of the solution, null when done */
+  nextMove(): string | null;
+}
+
+/** Player for a solution found by the scanner: shows every step and animates it on the virtual cube. */
 export function mountSolutionPanel(
   host: HTMLElement,
   cube: Cube,
   session: VirtualSession,
   onExit: () => void,
-): () => void {
+): SolutionPanel {
   const total = session.moves.length;
   let index = 0;
   let playing = false;
@@ -29,7 +38,7 @@ export function mountSolutionPanel(
 
   const panel = el('div', 'absolute top-16 left-1 z-10 w-80 max-h-[calc(100vh-9rem)] overflow-y-auto bg-gray-800/95 text-gray-200 rounded-lg p-3 shadow-lg');
   const header = el('div', 'flex items-center justify-between mb-1');
-  header.append(el('div', 'font-bold text-white', `Solution · ${session.method.toUpperCase()}`));
+  header.append(el('div', 'font-bold text-white', session.title ?? `Solution · ${session.method.toUpperCase()}`));
   const exit = el('button', 'text-xs text-gray-400 hover:text-white cursor-pointer', 'Exit');
   header.append(exit);
 
@@ -97,6 +106,14 @@ export function mountSolutionPanel(
   }
 
   /** Undo the last move by animating its inverse. */
+  let queued = 0;
+  async function drainQueue() {
+    while (queued > 0 && !disposed) {
+      queued--;
+      await stepOnce();
+    }
+  }
+
   async function stepBack() {
     if (busy || disposed || index <= 0) return;
     busy = true;
@@ -131,9 +148,21 @@ export function mountSolutionPanel(
   exit.addEventListener('click', onExit);
   render();
 
-  return () => {
-    disposed = true;
-    playing = false;
-    panel.remove();
+  return {
+    dispose() {
+      disposed = true;
+      playing = false;
+      panel.remove();
+    },
+    applyMove(move: string) {
+      if (disposed || playing || session.moves[index + queued] !== move) return false;
+      // moves may come faster than the animation: queue them and play them in order
+      queued++;
+      if (!busy) void drainQueue();
+      return true;
+    },
+    nextMove() {
+      return session.moves[index + queued] ?? null;
+    },
   };
 }
