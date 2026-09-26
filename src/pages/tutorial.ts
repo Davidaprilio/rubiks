@@ -60,17 +60,21 @@ function caseCard(c: AlgCase) {
   const card = el('div', 'case-card bg-white rounded-xl border border-gray-200 p-3 flex flex-col gap-2 shadow-sm cursor-pointer hover:ring-2 hover:ring-indigo-300 transition');
   card.dataset.search = `${c.name} ${c.algorithms.join(' ')}`.toLowerCase();
   card.title = 'Lihat animasi rumusnya';
-  card.addEventListener('click', () => {
+  const open = (algIndex: number) => {
     closeModal?.();
-    closeModal = openAlgModal(c, (alg) => practice(c, alg));
-  });
+    closeModal = openAlgModal(c, (alg) => practice(c, alg), algIndex);
+  };
+  card.addEventListener('click', () => open(0));
   const pic = el('div', 'flex justify-center');
   pic.innerHTML = c.kind === 'f2l' ? f2lView(c.state) : topView(c.state, c.kind, c.algorithms[0]);
   const title = el('div', 'font-bold text-gray-800', c.name);
   const algs = el('div', 'flex flex-col gap-1');
   c.algorithms.forEach((alg, i) => {
     const row = el('div', 'flex items-start gap-2');
-    const text = el('div', `font-mono text-sm flex-1 break-words ${i === 0 ? 'text-gray-900' : 'text-gray-500'}`, alg);
+    const text = el('div', `font-mono text-sm flex-1 break-words rounded hover:bg-indigo-50 ${i === 0 ? 'text-gray-900' : 'text-gray-500'}`, alg);
+    text.title = 'Lihat animasi rumus ini';
+    // this formula, not the first one
+    text.addEventListener('click', (e) => { e.stopPropagation(); open(i); });
     const btn = el('button', 'shrink-0 text-xs font-bold px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer', 'Coba ▶');
     btn.title = 'Buka kasus ini di virtual cube dan jalankan rumusnya';
     btn.addEventListener('click', (e) => { e.stopPropagation(); practice(c, alg); });

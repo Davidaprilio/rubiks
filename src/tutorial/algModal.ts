@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Cube, type TwistNotation } from '../classes/cube';
-import { normalizeAlg } from '../solver/cube54';
-import { toVirtualCubeState, toVirtualMoves } from '../solver/virtualCube';
+import { tokenize } from '../solver/cube54';
+import { toVirtualCubeState } from '../solver/virtualCube';
 import type { AlgCase } from '../solver/cases';
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string) {
@@ -14,12 +14,33 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, te
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** Layers turned together for a whole cube rotation (x like R, y like U, z like F). */
+const ROTATION_LAYERS: Record<string, string[]> = { x: ['R', "M'", "L'"], y: ['U', "E'", "D'"], z: ['F', 'S', "B'"] };
+const WIDE_LAYERS: Record<string, string[]> = { r: ['R', "M'"], l: ['L', 'M'], u: ['U', "E'"], d: ['D', 'E'], f: ['F', 'S'], b: ['B', "S'"] };
+
+const withSuffix = (move: string, suffix: string) => {
+  if (suffix === '2') return move[0] + '2';
+  if (suffix !== "'") return move;
+  return move.endsWith("'") ? move[0] : `${move}'`;
+};
+
+/**
+ * Animate one token as written, whole cube rotations (x y z) and wide moves included, so an
+ * algorithm is shown with its own grip ("y2 l' U2 …" really turns the cube first).
+ */
+function animateToken(cube: Cube, token: string): Promise<unknown> {
+  const face = token[0], suffix = token.slice(1);
+  const layers = ROTATION_LAYERS[face] ?? WIDE_LAYERS[face];
+  if (layers) return Promise.all(layers.map((l) => cube.twist(withSuffix(l, suffix) as TwistNotation)));
+  return cube.runNotation([token as TwistNotation]);
+}
+
 /**
  * Modal that plays a case's algorithm on a 3D cube: from the case, through every move, a short
  * pause on the result, back to the case, and again, until closed.
  */
-export function openAlgModal(c: AlgCase, onPractice: (alg: string) => void) {
-  let algIndex = 0;
+export function openAlgModal(c: AlgCase, onPractice: (alg: string) => void, startIndex = 0) {
+  let algIndex = Math.min(Math.max(0, startIndex), c.algorithms.length - 1);
   let paused = false;
   let closed = false;
   let runId = 0;
@@ -103,7 +124,8 @@ export function openAlgModal(c: AlgCase, onPractice: (alg: string) => void) {
   /** Case -> moves -> pause -> case ..., restarted when another algorithm is picked. */
   async function loop() {
     const id = ++runId;
-    const moves = toVirtualMoves(normalizeAlg(c.algorithms[algIndex]));
+    // the tokens as written (grouping parentheses dropped, "(R U)2" expanded)
+    const moves = tokenize(c.algorithms[algIndex]).map((t) => t.replace("'2", '2').replace("2'", '2'));
     while (!closed && id === runId) {
       await twisting;
       if (closed || id !== runId) return;
@@ -116,7 +138,7 @@ export function openAlgModal(c: AlgCase, onPractice: (alg: string) => void) {
         if (closed || id !== runId) return;
         renderChips(moves, i);
         status.textContent = `Langkah ${i + 1} / ${moves.length}: ${moves[i]}`;
-        twisting = cube.runNotation([moves[i] as TwistNotation]);
+        twisting = animateToken(cube, moves[i]);
         await twisting;
       }
       renderChips(moves, moves.length);
