@@ -71,7 +71,10 @@ export function detectCubeFace(frame: any): {
     const contour = contours.get(i);
     const area = cv.contourArea(contour);
     
-    if (area < minArea || area > maxArea) continue;
+    if (area < minArea || area > maxArea) {
+      contour.delete();
+      continue;
+    }
     
     const peri = cv.arcLength(contour, true);
     const approx = new cv.Mat();
