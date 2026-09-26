@@ -1,24 +1,24 @@
 import './style.css'
-import { route, initRouter, setCleanup } from './router';
+import { route, initRouter } from './router';
 import { loadHomePage, getHomeCleanup } from './pages/home';
 
 // Define routes
 route('/', async () => {
   await loadHomePage();
-  setCleanup(getHomeCleanup());
+  return getHomeCleanup();
 });
 
 route('/scan', async () => {
   // Dynamic import - OpenCV.js only loaded when scan page is accessed
   const { loadScanPage, getScanCleanup } = await import('./pages/scan');
   await loadScanPage();
-  setCleanup(getScanCleanup());
+  return getScanCleanup();
 });
 
 route('/tutorial', async () => {
   const { loadTutorialPage, getTutorialCleanup } = await import('./pages/tutorial');
   await loadTutorialPage();
-  setCleanup(getTutorialCleanup());
+  return getTutorialCleanup();
 });
 
 // Initialize router

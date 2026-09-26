@@ -74,17 +74,25 @@ export class CameraTracker {
 
   async start(deviceId?: string) {
     this.stopStream();
-    const [stream] = await Promise.all([
-      navigator.mediaDevices.getUserMedia({
-        video: {
-          ...(deviceId ? { deviceId: { exact: deviceId } } : { facingMode: 'user' }),
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          frameRate: { ideal: 30 },
-        },
-      }),
-      this.worker || this.core ? Promise.resolve() : this.startAnalysis(),
-    ]);
+    const streamPromise = navigator.mediaDevices.getUserMedia({
+      video: {
+        ...(deviceId ? { deviceId: { exact: deviceId } } : { facingMode: 'user' }),
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        frameRate: { ideal: 30 },
+      },
+    });
+    let stream: MediaStream;
+    try {
+      [stream] = await Promise.all([
+        streamPromise,
+        this.worker || this.core ? Promise.resolve() : this.startAnalysis(),
+      ]);
+    } catch (e) {
+      // the camera may have opened while the analysis failed: release it
+      streamPromise.then((s) => s.getTracks().forEach((t) => t.stop()), () => {});
+      throw e;
+    }
     this.stream = stream;
     this.video.srcObject = stream;
     await this.video.play();

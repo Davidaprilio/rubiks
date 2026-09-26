@@ -558,7 +558,7 @@ export async function loadScanPage() {
 
   // --- Real-time dots ---
   function drawFrame() {
-    if (!video.videoWidth) return;
+    if (!video.videoWidth || scanManager.isComplete()) return;
 
     offscreen.width = video.videoWidth;
     offscreen.height = video.videoHeight;

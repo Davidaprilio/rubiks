@@ -1,4 +1,6 @@
-export type RouteHandler = () => void | Promise<void>;
+type Cleanup = (() => void) | null | void;
+/** renders the page and returns what undoes it */
+export type RouteHandler = () => Cleanup | Promise<Cleanup>;
 
 const routes = new Map<string, RouteHandler>();
 let currentCleanup: (() => void) | null = null;
@@ -16,11 +18,9 @@ export function getCurrentRoute(): string {
   return location.pathname;
 }
 
-export function setCleanup(fn: (() => void) | null) {
-  currentCleanup = fn;
-}
-
 let shownPath: string | null = null;
+/** bumped on every navigation, a handler that finishes after a newer one started is stale */
+let navigation = 0;
 
 /** Back / forward between #fragments of the page already shown: just scroll there. */
 function onPopState() {
@@ -41,14 +41,16 @@ async function handleRoute() {
 
   const path = getCurrentRoute();
   shownPath = path;
-  const handler = routes.get(path);
+  const handler = routes.get(path) ?? routes.get('/');
+  const current = ++navigation;
 
-  if (handler) {
-    await handler();
-  } else {
-    const homeHandler = routes.get('/');
-    if (homeHandler) await homeHandler();
+  const cleanup = await handler?.();
+  if (current !== navigation) {
+    // navigated away while the handler was still loading: undo what it set up
+    cleanup?.();
+    return;
   }
+  currentCleanup = cleanup ?? null;
 }
 
 export function initRouter() {

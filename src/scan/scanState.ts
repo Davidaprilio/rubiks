@@ -100,6 +100,8 @@ export class ScanStateManager {
   }
   
   recordFace(colors: RubikColor[][]): boolean {
+    // all six faces are scanned: there is no current face to record into
+    if (this.state.currentFaceIndex >= FACE_ORDER.length) return false;
     const currentFace = this.getCurrentFace();
     const face = this.state.faces.get(currentFace)!;
     

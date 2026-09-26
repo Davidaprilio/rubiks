@@ -127,7 +127,23 @@ export async function loadHomePage() {
     solution: () => solutionPanel,
   })
 
+  const disposeScene = () => {
+    stopTracking();
+    solutionPanel?.dispose();
+    renderer.setAnimationLoop(null);
+    trackballControl.dispose();
+    renderer.dispose();
+    if (stats && stats.dom.parentNode) {
+      stats.dom.parentNode.removeChild(stats.dom);
+    }
+  }
+
   await sleep(1_000)
+  // left the page during the wait: another page owns #app now
+  if (!container.isConnected) {
+    disposeScene();
+    return;
+  }
 
   c.on('runNotation', (e) => {
     const { notations } = (e as CustomEvent).detail;
@@ -269,16 +285,9 @@ export async function loadHomePage() {
   window.addEventListener('keyup', onKeyUp);
 
   cleanupFn = () => {
-    stopTracking();
-    solutionPanel?.dispose();
-    renderer.setAnimationLoop(null);
-    trackballControl.dispose();
-    renderer.dispose();
+    disposeScene();
     window.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('keyup', onKeyUp);
-    if (stats && stats.dom.parentNode) {
-      stats.dom.parentNode.removeChild(stats.dom);
-    }
     cleanupFn = null;
   };
 }

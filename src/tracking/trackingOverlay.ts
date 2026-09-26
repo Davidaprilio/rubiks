@@ -106,9 +106,11 @@ export function mountTrackingOverlay(host: HTMLElement, tracker: CameraTracker, 
     cameraSelect.addEventListener('change', () => void tracker.start(cameraSelect.value));
   }).catch(() => {});
 
+  let recorder: CaptureRecorder | null = null;
+  let recTimer: number | null = null;
   if (options.dev) {
     // dev only: frames are written into the project by the dev server (captures/<session>)
-    const recorder = new CaptureRecorder(tracker, () => mirror);
+    const rec = recorder = new CaptureRecorder(tracker, () => mirror);
     const snapBtn = el('button', 'px-2 py-0.5 rounded bg-gray-700 hover:bg-gray-600 cursor-pointer', '📷');
     snapBtn.title = 'Save this frame to captures/';
     recBtn.before(snapBtn);
@@ -117,21 +119,20 @@ export function mountTrackingOverlay(host: HTMLElement, tracker: CameraTracker, 
     const report = (text: string) => { captureInfo.textContent = text; captureInfo.classList.remove('hidden'); };
     const saved = (dir: string) => report(`Saved to ${dir}`);
     const failed = (e: unknown) => report(`Capture failed: ${e instanceof Error ? e.message : e} (needs npm run dev)`);
-    snapBtn.addEventListener('click', () => { if (!recorder.recording) recorder.snapshot().then(saved, failed); });
-    let timer: number | null = null;
+    snapBtn.addEventListener('click', () => { if (!rec.recording) rec.snapshot().then(saved, failed); });
     recBtn.addEventListener('click', () => {
-      if (!recorder.recording) {
-        recorder.start();
+      if (!rec.recording) {
+        rec.start();
         recBtn.textContent = '■ Stop rec';
         recBtn.classList.add('bg-red-700');
-        timer = window.setInterval(() => report(`Recording... ${recorder.savedFrames} frames`), 250);
+        recTimer = window.setInterval(() => report(`Recording... ${rec.savedFrames} frames`), 250);
         return;
       }
-      if (timer) clearInterval(timer);
+      if (recTimer) clearInterval(recTimer);
       recBtn.textContent = '● Rec';
       recBtn.classList.remove('bg-red-700');
       report('Saving...');
-      recorder.stop().then(saved, failed);
+      rec.stop().then(saved, failed);
     });
   }
 
@@ -217,6 +218,9 @@ export function mountTrackingOverlay(host: HTMLElement, tracker: CameraTracker, 
     },
     dispose() {
       unsubscribe();
+      if (recTimer) clearInterval(recTimer);
+      // closed while recording: still write session.json so the frames can be replayed
+      if (recorder?.recording) recorder.stop().catch((e) => console.warn(e));
       panel.remove();
     },
   };

@@ -35,8 +35,6 @@ export function createScanUI(): HTMLElement {
           <div class="w-16"></div>
           <div id="net-U" class="flex flex-col gap-[1px]">
             ${createFaceGrid('net-U', 10)}
-            ${createFaceGrid('net-U', 10)}
-            ${createFaceGrid('net-U', 10)}
           </div>
           <div class="w-16"></div>
         </div>
@@ -45,22 +43,14 @@ export function createScanUI(): HTMLElement {
         <div class="flex items-center gap-[2px]">
           <div id="net-L" class="flex flex-col gap-[1px]">
             ${createFaceGrid('net-L', 10)}
-            ${createFaceGrid('net-L', 10)}
-            ${createFaceGrid('net-L', 10)}
           </div>
           <div id="net-F" class="flex flex-col gap-[1px]">
-            ${createFaceGrid('net-F', 10)}
-            ${createFaceGrid('net-F', 10)}
             ${createFaceGrid('net-F', 10)}
           </div>
           <div id="net-R" class="flex flex-col gap-[1px]">
             ${createFaceGrid('net-R', 10)}
-            ${createFaceGrid('net-R', 10)}
-            ${createFaceGrid('net-R', 10)}
           </div>
           <div id="net-B" class="flex flex-col gap-[1px]">
-            ${createFaceGrid('net-B', 10)}
-            ${createFaceGrid('net-B', 10)}
             ${createFaceGrid('net-B', 10)}
           </div>
         </div>
@@ -69,8 +59,6 @@ export function createScanUI(): HTMLElement {
         <div class="flex items-center">
           <div class="w-16"></div>
           <div id="net-D" class="flex flex-col gap-[1px]">
-            ${createFaceGrid('net-D', 10)}
-            ${createFaceGrid('net-D', 10)}
             ${createFaceGrid('net-D', 10)}
           </div>
           <div class="w-16"></div>
@@ -182,7 +170,7 @@ export function updateCubeNetFace(face: FaceName, colors: RubikColor[][]) {
   const netFace = document.getElementById(`net-${face}`);
   if (!netFace) return;
   
-  const cells = netFace.querySelectorAll('[id^="net-"]');
+  const cells = netFace.querySelectorAll(`[id^="net-${face}-"]`);
   let idx = 0;
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
