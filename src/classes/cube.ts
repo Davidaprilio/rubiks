@@ -66,6 +66,7 @@ export class Cube {
         })
         this.removeCubelet();
         this.makeCubelet(maps)
+        this.event.dispatchEvent(new CustomEvent('set', { detail: { state } }));
     }
 
     get(index?: number): string[]

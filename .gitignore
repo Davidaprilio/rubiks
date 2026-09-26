@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# camera tracking captures (npm run dev -> tracking panel -> Rec)
+captures

@@ -4,21 +4,10 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>rubiks</title>
+    <title>Rubik's Visual Solver</title>
   </head>
   <body>
-    <div id="app" class="relative">
-      <div id="panel" class="absolute bottom-0 left-0 right-0 w-full py-2 block">
-        <div id="notation" class="text-center">
-          <template id="notation-option">
-            <button class="text-gray-400 px-4 mx-4 my-1 rounded border bg-gray-700 cursor-pointer active:scale-95"></button>
-          </template>
-        </div>
-      </div>
-      <div class="absolute top-0 left-0 mt-1 ml-1">
-        <div class="flex overflow-hidden max-w-xl gap-x-2 layout-container"></div>
-      </div>
-    </div>
+    <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
