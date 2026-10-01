@@ -2,6 +2,7 @@ import type { RubikColor } from '../cv/colorDetector';
 import { COLOR_DISPLAY } from '../cv/colorDetector';
 import type { FaceName } from './scanState';
 import { FACE_INSTRUCTIONS, FACE_CENTER_COLORS } from './scanState';
+import { url } from '../router';
 
 // Create a 3x3 face grid HTML
 function createFaceGrid(faceId: string, cellSize: number = 12): string {
@@ -18,7 +19,7 @@ export function createScanUI(): HTMLElement {
   
   container.innerHTML = `
     <div id="scan-header" class="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4 bg-gray-800/80 backdrop-blur">
-      <a href="/" class="text-white hover:text-gray-300 transition-colors">
+      <a href="${url('/')}" class="text-white hover:text-gray-300 transition-colors">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>

@@ -9,13 +9,28 @@ export function route(path: string, handler: RouteHandler) {
   routes.set(path, handler);
 }
 
+/** where the app is served from without the trailing slash: '' locally, '/rubiks' on GitHub Pages */
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+/** Address of an app route (e.g. '/scan') under the base the app is served from. */
+export function url(path: string): string {
+  return BASE + path;
+}
+
+/** The app route of an address under the base, or null when it is outside the app. */
+function toRoute(pathname: string): string | null {
+  if (!BASE) return pathname;
+  if (pathname === BASE) return '/';
+  return pathname.startsWith(BASE + '/') ? pathname.slice(BASE.length) : null;
+}
+
 export function navigate(path: string) {
-  history.pushState(null, '', path);
+  history.pushState(null, '', url(path));
   handleRoute();
 }
 
 export function getCurrentRoute(): string {
-  return location.pathname;
+  return toRoute(location.pathname) ?? '/';
 }
 
 let shownPath: string | null = null;
@@ -57,9 +72,11 @@ export function initRouter() {
   window.addEventListener('popstate', onPopState);
   document.addEventListener('click', (e) => {
     const link = (e.target as HTMLElement).closest('a');
-    if (link && link.getAttribute('href')?.startsWith('/')) {
+    const href = link?.getAttribute('href');
+    const path = href?.startsWith('/') ? toRoute(href) : null;
+    if (path !== null) {
       e.preventDefault();
-      navigate(link.getAttribute('href')!);
+      navigate(path);
     }
   });
   handleRoute();
