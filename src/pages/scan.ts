@@ -5,7 +5,7 @@ import { updateProgressUI, updateFaceInstruction } from '../scan/scanUI';
 import { ScanCube3D } from '../scan/scanCube3D';
 import { SOLVE_METHODS, scanToState, type ScannedFaces } from '../solver';
 import { buildVirtualSession, saveVirtualSession, type VirtualSession } from '../solver/virtualCube';
-import { navigate } from '../router';
+import { navigate, url } from '../router';
 import { renderSolution, renderSolutionMessage } from '../scan/solutionUI';
 import {
   DEFAULT_TUNED, TUNED_COLORS_KEY, classifyColor, loadMirrorState, loadTunedColors, saveMirrorState, saveTunedColors,
@@ -65,10 +65,10 @@ export async function loadScanPage() {
   app.innerHTML = `
     <div id="scan-app" class="h-screen w-screen bg-gray-100 overflow-auto">
       <div class="bg-white border-b border-gray-300 px-4 py-2 flex items-center gap-4">
-        <a href="/" class="text-gray-700 hover:text-gray-900 font-bold text-lg">Rubik's Solver</a>
+        <a href="${url('/')}" class="text-gray-700 hover:text-gray-900 font-bold text-lg">Rubik's Solver</a>
         <span class="text-gray-400">|</span>
         <span class="text-gray-600 font-medium">Scanner</span>
-        <a href="/tutorial" class="ml-auto text-sm text-indigo-600 hover:text-indigo-800 font-medium">Tutorial CFOP</a>
+        <a href="${url('/tutorial')}" class="ml-auto text-sm text-indigo-600 hover:text-indigo-800 font-medium">Tutorial CFOP</a>
       </div>
 
       <div class="max-w-6xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4">

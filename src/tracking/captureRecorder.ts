@@ -37,7 +37,7 @@ export interface CaptureSession {
 }
 
 const upload = async (path: string, body: Blob | string) => {
-  const res = await fetch(`/__captures/${path}`, { method: 'POST', body });
+  const res = await fetch(`${import.meta.env.BASE_URL}__captures/${path}`, { method: 'POST', body });
   if (!res.ok) throw new Error(`capture upload failed (${res.status}): ${path}`);
 };
 

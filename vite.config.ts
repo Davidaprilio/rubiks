@@ -34,10 +34,28 @@ function cubeCaptures(): Plugin {
   }
 }
 
+/**
+ * GitHub Pages has no SPA fallback: it serves 404.html for /scan, /tutorial, ... so make that
+ * a copy of index.html and the router picks the route up from the address.
+ */
+function spaFallback(): Plugin {
+  return {
+    name: 'spa-fallback',
+    apply: 'build',
+    closeBundle() {
+      const dist = path.resolve(__dirname, 'dist')
+      fs.copyFileSync(path.join(dist, 'index.html'), path.join(dist, '404.html'))
+    },
+  }
+}
+
 export default defineConfig({
+  // served from a sub path on GitHub Pages (/<repo>/), set by the deploy workflow
+  base: process.env.BASE_PATH ?? '/',
   plugins: [
     tailwindcss(),
     cubeCaptures(),
+    spaFallback(),
   ],
   resolve: {
     alias: {

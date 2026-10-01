@@ -6,7 +6,7 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { CFOP } from '../classes/solvers/cfop';
 import { sleep } from '../utils/utils';
 import { createLayout } from 'animejs';
-import { navigate } from '../router';
+import { navigate, url } from '../router';
 import { clearVirtualSession, loadVirtualSession } from '../solver/virtualCube';
 import { mountSolutionPanel, type SolutionPanel } from './homeSolution';
 import { setupHomeTracking } from './homeTracking';
@@ -64,10 +64,10 @@ export async function loadHomePage() {
       </div>
       <div class="absolute top-4 right-4 z-10 flex gap-2">
         <button id="tracking-btn" class="text-white px-4 py-2 rounded transition-colors cursor-pointer disabled:opacity-60">Camera Tracking</button>
-        <a href="/tutorial" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">
+        <a href="${url('/tutorial')}" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors">
           Tutorial
         </a>
-        <a href="/scan" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors">
+        <a href="${url('/scan')}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors">
           Scan Cube
         </a>
       </div>
