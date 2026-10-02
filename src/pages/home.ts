@@ -10,6 +10,7 @@ import { navigate, url } from '../router';
 import { clearVirtualSession, loadVirtualSession } from '../solver/virtualCube';
 import { mountSolutionPanel, type SolutionPanel } from './homeSolution';
 import { setupHomeTracking } from './homeTracking';
+import { setupDragTwist } from './homeDrag';
 
 const isDev = import.meta.env.DEV;
 
@@ -127,7 +128,10 @@ export async function loadHomePage() {
     solution: () => solutionPanel,
   })
 
+  const stopDrag = setupDragTwist({ dom: renderer.domElement, camera, cube: c, controls: trackballControl })
+
   const disposeScene = () => {
+    stopDrag();
     stopTracking();
     solutionPanel?.dispose();
     renderer.setAnimationLoop(null);
