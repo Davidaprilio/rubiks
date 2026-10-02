@@ -95,6 +95,10 @@ export async function loadHomePage() {
 
   const trackballControl = new TrackballControls( camera, renderer.domElement );
   trackballControl.rotateSpeed = 5;
+  // the cube stays in the middle of the screen: rotate and zoom only, within a sensible range
+  trackballControl.noPan = true;
+  trackballControl.minDistance = 7;
+  trackballControl.maxDistance = 20;
 
   const c = new Cube()
   scene.add( c.threeObj )
