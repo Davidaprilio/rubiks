@@ -1,5 +1,5 @@
 import {
-  ROTATIONS, SOLVED, STICKER_POS, applyAlg, centersHome, invertAlg, normalizeAlg, rotateState, type Color,
+  ROTATIONS, SOLVED, STICKER_POS, applyAlg, centersHome, invertAlg, normalizeAlg, rotateState, simplifyAlg, type Color,
 } from './cube54';
 import { OllAlgorithms } from '../classes/solvers/algorithms/oll.algo';
 import { PllAlgorithms } from '../classes/solvers/algorithms/pll.algo';
@@ -21,6 +21,8 @@ export interface AlgCase {
   state: Color[];
   /** algorithms that solve it; each already includes the U turn it may need first */
   algorithms: string[];
+  /** moves that make `state` from a solved cube, to set the case up on a real cube */
+  setup: string;
 }
 
 const AUF = ['', 'U', 'U2', "U'"];
@@ -31,6 +33,9 @@ function reorient(state: Color[]): Color[] {
   const r = ROTATIONS.find((rot) => centersHome(rotateState(state, rot)));
   return r ? rotateState(state, r) : state;
 }
+
+/** Moves that undo `alg`: from a solved cube they make the case it solves. */
+const reverse = (alg: string) => simplifyAlg(invertAlg(normalizeAlg(alg))).join(' ');
 
 /** The case an algorithm solves: undo it from a solved cube. */
 export function caseOf(alg: string): Color[] {
@@ -63,6 +68,7 @@ function build(): AlgCase[] {
       group: c.group,
       state,
       algorithms: c.algorithms.filter((a) => fitted(state, a, f2lDone) === a),
+      setup: c.setup,
     });
   }
 
@@ -76,6 +82,7 @@ function build(): AlgCase[] {
       group: 'oll',
       state,
       algorithms: a.solve.map((alg) => fitted(state, alg, ollDone)).filter((x): x is string => x !== null),
+      setup: reverse(a.solve[0]),
     });
   }
   out.sort((x, y) => (x.kind === 'oll' && y.kind === 'oll' ? Number(x.name.slice(4)) - Number(y.name.slice(4)) : 0));
@@ -89,6 +96,7 @@ function build(): AlgCase[] {
       group: (a.tags ?? [])[0] ?? 'pll',
       state,
       algorithms: a.solve.map((alg) => fitted(state, alg, pllDone)).filter((x): x is string => x !== null),
+      setup: reverse(a.solve[0]),
     });
   }
   return out;

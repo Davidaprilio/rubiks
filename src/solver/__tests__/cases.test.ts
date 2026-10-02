@@ -18,6 +18,9 @@ describe('tutorial cases', () => {
       for (const alg of c.algorithms) expect(f2lDone(applyAlg(c.state, alg) as Color[]), `${c.id} ${alg}`).toBe(true)
     }
   })
+  it('the setup makes exactly the pictured case from a solved cube', () => {
+    for (const c of cases) expect(applyAlg(SOLVED, c.setup), `${c.id} ${c.setup}`).toEqual(c.state)
+  })
   it('OLL / PLL cases keep the first two layers', () => {
     for (const c of cases.filter((x) => x.kind !== 'f2l')) expect(f2lDone(c.state), c.id).toBe(true)
   })

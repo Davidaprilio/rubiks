@@ -81,7 +81,14 @@ function caseCard(c: AlgCase) {
     row.append(text, btn);
     algs.append(row);
   });
-  card.append(pic, title, algs);
+  const setup = el('div', 'text-xs text-gray-500 border-t border-gray-100 pt-2');
+  const setupAlg = el('span', 'font-mono text-gray-700 select-all cursor-text', c.setup);
+  setupAlg.title = 'Klik untuk memilih, lalu salin';
+  // selecting the moves must not open the animation
+  setupAlg.addEventListener('click', (e) => e.stopPropagation());
+  setup.append('Setup dari solved: ', setupAlg);
+  setup.title = 'Putar ini dari kubus solved (kuning di atas, merah di depan) untuk mendapat kasus ini di kubus asli';
+  card.append(pic, title, algs, setup);
   return card;
 }
 
