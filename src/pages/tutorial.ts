@@ -136,6 +136,7 @@ function notationTable() {
     ['r  u  f  l  d  b', 'Wide: putar dua layer sekaligus (sisi itu + layer tengah di sebelahnya).'],
     ['M  E  S', 'Layer tengah: M searah L, E searah D, S searah F.'],
     ['x  y  z', 'Putar seluruh kubus: x searah R, y searah U, z searah F. Bukan twist, hanya ganti pegangan.'],
+    ['( … )  ( … )2', "Kurung hanya pengelompokan supaya mudah dihafal. Angka setelah kurung berarti ulangi isinya: (R U R' U')2 = R U R' U' R U R' U'."],
   ];
   const table = el('div', 'grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 bg-white rounded-xl border border-gray-200 p-4 max-w-3xl');
   for (const [move, text] of rows) {
